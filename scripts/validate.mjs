@@ -19,3 +19,14 @@ for (const asset of ["styles.css"]) {
   }
 }
 console.log("✓ HTML asset references");
+
+const renderer = await readFile("renderer.js", "utf8");
+for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
+  if (!renderer.includes(transition)) {
+    throw new Error("Missing renderer transition: " + transition);
+  }
+}
+if (!renderer.includes("canvas.width = 1080") || !renderer.includes("canvas.height = 1080")) {
+  throw new Error("Square export dimensions are not configured.");
+}
+console.log("✓ Scene transitions and square output dimensions");
