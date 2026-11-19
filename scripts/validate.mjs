@@ -42,7 +42,7 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4") ||
   throw new Error("MP4 conversion must check FFmpeg's exit code and validate the MP4 container signature.");
 }
 if (!renderer.includes("finally") || !renderer.includes("stream.getTracks().forEach(track => track.stop())") ||
-    !renderer.includes("await audioContext.close()")) {
+    !renderer.includes("await audioContext.close()") || !renderer.includes("recorderFailure = event.error")) {
   throw new Error("Video export must release media tracks and audio resources on every exit path.");
 }
 console.log("✓ MP4 conversion UI, H.264 pipeline, exit-code and container validation");
