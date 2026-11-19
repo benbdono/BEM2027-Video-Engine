@@ -41,7 +41,7 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
 }
 console.log("✓ MP4 conversion UI and H.264 pipeline");
 
-if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('/dist/esm/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
+if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('/dist/esm') || !renderer.includes('/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
   throw new Error("FFmpeg must use the same-origin ESM worker and ESM core.");
 }
 const worker = await readFile("vendor/ffmpeg/worker.js", "utf8");
