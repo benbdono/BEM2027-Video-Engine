@@ -36,10 +36,16 @@ const mp4Download = html.includes('id="renderMp4Download"');
 if (!mp4Button || !mp4Download) {
   throw new Error("MP4 conversion controls are missing from index.html.");
 }
-if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
-  throw new Error("MP4 H.264 conversion pipeline is missing.");
+if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4") ||
+    !renderer.includes("const exitCode = await ffmpeg.exec") ||
+    !renderer.includes('String.fromCharCode(...output.subarray(4, 8)) === "ftyp"')) {
+  throw new Error("MP4 conversion must check FFmpeg's exit code and validate the MP4 container signature.");
 }
-console.log("✓ MP4 conversion UI and H.264 pipeline");
+if (!renderer.includes("finally") || !renderer.includes("stream.getTracks().forEach(track => track.stop())") ||
+    !renderer.includes("await audioContext.close()")) {
+  throw new Error("Video export must release media tracks and audio resources on every exit path.");
+}
+console.log("✓ MP4 conversion UI, H.264 pipeline, exit-code and container validation");
 
 if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js') || !renderer.includes('/dist/esm') || !renderer.includes('/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
   throw new Error("FFmpeg must use the native ESM entry, same-origin worker and ESM core.");
@@ -54,4 +60,9 @@ for (const dependency of ['./const.js', './errors.js']) {
 if (renderer.includes("/814.ffmpeg.js")) {
   throw new Error("The webpack UMD worker chunk must not be used.");
 }
-console.log("✓ FFmpeg uses a same-origin ESM worker with the ESM core");
+if (!renderer.includes('new URL("vendor/ffmpeg/worker.js", document.baseURI)') ||
+    !renderer.includes('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js') ||
+    !renderer.includes('https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm')) {
+  throw new Error("Pinned FFmpeg ESM package URLs or same-origin worker path are missing.");
+}
+console.log("✓ FFmpeg uses pinned native ESM, same-origin module worker and single-thread ESM core");
