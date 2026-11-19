@@ -21,6 +21,9 @@ for (const asset of ["styles.css"]) {
 console.log("✓ HTML asset references");
 
 const renderer = await readFile("renderer.js", "utf8");
+if (!html.includes("الإصدار 1.0.1") || html.includes("الإصدار 1.0.0")) {
+  throw new Error("Sidebar version label is stale; expected 1.0.1.");
+}
 for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
   if (!renderer.includes(transition)) {
     throw new Error("Missing renderer transition: " + transition);
