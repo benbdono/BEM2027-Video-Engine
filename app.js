@@ -7,14 +7,14 @@
     {title:"الخاتمة", duration:8, transition:"تلاشي", screenText:"بالتوفيق في شهادة BEM 2027", voice:"واصلوا المراجعة، وثقتكم بأنفسكم هي بداية النجاح.", visual:"شاشة ختامية تحمل هوية ملخصات BEM2027.", robot:true}
   ];
   let scenes = JSON.parse(localStorage.getItem("bemScenes") || "null") || defaults;
-  let current = 0, ratio = "16:9", playing = false, timer = null;
+  let current = 0, ratio = "16:9", playing = false, timer = null, previewAssetToken = 0;
 
   const save = () => {
     localStorage.setItem("bemScenes", JSON.stringify(scenes));
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.1",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -26,7 +26,9 @@
     $("robot").style.display=s.robot && $("robotToggle").checked?"block":"none";
     $("sceneCount").style.visibility=$("numberToggle").checked?"visible":"hidden";
     const preview = $("preview");
-    const previewToken = (preview.dataset.assetToken = String(Date.now()) + "-" + current);
+    const previewToken = (preview.dataset.assetToken = String(++previewAssetToken));
+    if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
+    preview.dataset.assetUrl = "";
     const previewSource = s.image || "";
     if (s.imageAssetId && window.BEMMedia) {
       window.BEMMedia.getBlob(s.imageAssetId).then(blob => {
@@ -36,7 +38,7 @@
         preview.style.backgroundImage = blob
           ? 'linear-gradient(115deg,rgba(12,14,25,.78),rgba(19,18,42,.72)),url("' + preview.dataset.assetUrl + '")'
           : "";
-      }).catch(() => { preview.style.backgroundImage = ""; });
+      }).catch(() => { if (preview.dataset.assetToken === previewToken) preview.style.backgroundImage = ""; });
     } else {
       if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
       preview.dataset.assetUrl = "";

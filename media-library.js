@@ -65,16 +65,19 @@
     img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("ملف الصورة غير صالح أو لا يمكن قراءته."));};
     img.src=url;
   });
+  let renderedObjectUrls = [];
   const formatSize = bytes => bytes < 1024*1024 ? Math.round(bytes/1024)+" KB" : (bytes/1024/1024).toFixed(1)+" MB";
   const render = async () => {
     try {
       const assets=await getAll();
+      renderedObjectUrls.forEach(url=>URL.revokeObjectURL(url));
+      renderedObjectUrls = [];
       grid.replaceChildren();
       if(!assets.length){grid.innerHTML='<p class="render-help">المكتبة فارغة. أضف صوراً للبدء.</p>';return;}
       assets.sort((a,b)=>b.createdAt-a.createdAt);
       for(const asset of assets){
         const card=document.createElement("article");card.className="media-asset";
-        const img=document.createElement("img");img.alt=asset.name;img.src=URL.createObjectURL(asset.blob);
+        const img=document.createElement("img");img.alt=asset.name;img.src=URL.createObjectURL(asset.blob);renderedObjectUrls.push(img.src);
         const title=document.createElement("strong");title.textContent=asset.name;
         const size=document.createElement("small");size.className="media-size";size.textContent=formatSize(asset.blob.size);
         const actions=document.createElement("div");actions.className="media-asset-actions";
