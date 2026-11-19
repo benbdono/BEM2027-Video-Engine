@@ -15,3 +15,5 @@ jobs:
         run: |
           node --check app.js
           node --check renderer.js
+      - name: Validate project files and references
+        run: node scripts/validate.mjs
