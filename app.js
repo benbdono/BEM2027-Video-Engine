@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"0.7.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"0.8.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -52,13 +52,13 @@
       <label>الروبوت في هذا المشهد<select id="sRobot"><option value="true">إظهار</option><option value="false">إخفاء</option></select></label>
       <label class="wide">النص الظاهر على الشاشة<textarea id="sScreen"></textarea></label>
       <label class="wide">نص التعليق الصوتي<textarea id="sVoice"></textarea></label>
-      <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>
+      <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>\n      <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
       <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
       </div><div class="editor-actions"><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
-    $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;
+    $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;$("sSourceText").value=s.sourceText||"";
     $("sImage").addEventListener("change", async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("يرجى اختيار ملف صورة.");return;}const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const img=new Image();img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);s.image=canvas.toDataURL("image/jpeg",0.82);save();alert("تم حفظ صورة المشهد.");};img.onerror=()=>alert("تعذر قراءة الصورة.");img.src=dataUrl;});
     $("applyScene").onclick=()=>{
-      s.title=$("sTitle").value.trim()||"مشهد جديد";s.duration=Math.max(1,Math.min(300,Number($("sDuration").value)||1));s.transition=$("sTransition").value;s.robot=$("sRobot").value==="true";s.screenText=$("sScreen").value;s.voice=$("sVoice").value;s.visual=$("sVisual").value;save();renderPreview();renderEditor();
+      s.title=$("sTitle").value.trim()||"مشهد جديد";s.duration=Math.max(1,Math.min(300,Number($("sDuration").value)||1));s.transition=$("sTransition").value;s.robot=$("sRobot").value==="true";s.screenText=$("sScreen").value;s.voice=$("sVoice").value;s.visual=$("sVisual").value;s.sourceText=$("sSourceText").value;save();renderPreview();renderEditor();
     };
     $("duplicateScene").onclick=()=>{scenes.splice(current+1,0,{...s,title:s.title+" - نسخة"});current++;save();renderPreview();renderEditor();};
   };
@@ -102,12 +102,12 @@
   const optimizeSlideImage = async dataUrl => new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(img.width * scale));
       canvas.height = Math.max(1, Math.round(img.height * scale));
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.78));
+      resolve(canvas.toDataURL("image/jpeg", 0.62));
     };
     img.onerror = () => resolve("");
     img.src = dataUrl;
@@ -120,14 +120,14 @@
     button.disabled = true;
     button.textContent = "جارٍ استيراد العرض...";
     try {
-      if (file.size > 150 * 1024 * 1024) throw new Error("حجم العرض أكبر من 150 ميغابايت.");
+      if (file.size > 50 * 1024 * 1024) throw new Error("حجم العرض أكبر من 50 ميغابايت.");
       const { default: JSZip } = await import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm");
       const zip = await JSZip.loadAsync(file, { checkCRC32: true });
       const slideFiles = Object.keys(zip.files)
         .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
         .sort((x,y) => Number(x.match(/slide(\d+)/)[1]) - Number(y.match(/slide(\d+)/)[1]));
       if (!slideFiles.length) throw new Error("لم يتم العثور على شرائح صالحة داخل ملف PPTX.");
-      if (slideFiles.length > 100) throw new Error("العرض يحتوي على أكثر من 100 شريحة. قسّمه إلى عروض أصغر.");
+      if (slideFiles.length > 20) throw new Error("الإصدار الحالي يستورد حتى 20 شريحة في المرة الواحدة لحماية مساحة التخزين في المتصفح.");
       const imported = [];
       for (let i=0; i<slideFiles.length; i++) {
         const path = slideFiles[i];
@@ -183,6 +183,80 @@
     } finally {
       button.disabled = false;
       button.textContent = "استيراد عرض PPTX";
+      event.target.value = "";
+    }
+  };
+
+
+  // PDF importer: render each page into an optimized scene image and extract selectable text.
+  $("pdfBtn").onclick = () => $("pdfFile").click();
+  $("pdfFile").onchange = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const button = $("pdfBtn");
+    button.disabled = true;
+    button.textContent = "جارٍ استيراد PDF...";
+    try {
+      if (file.size > 40 * 1024 * 1024) throw new Error("حجم ملف PDF أكبر من 40 ميغابايت.");
+      const pdfjs = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs";
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data: bytes, isEvalSupported: false }).promise;
+      if (!pdf.numPages) throw new Error("ملف PDF لا يحتوي على صفحات.");
+      if (pdf.numPages > 20) throw new Error("الإصدار الحالي يستورد حتى 20 صفحة في المرة الواحدة لحماية ذاكرة المتصفح.");
+      const imported = [];
+      let totalImageBytes = 0;
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = Math.min(1.5, 1500 / Math.max(baseViewport.width, baseViewport.height));
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.floor(viewport.width));
+        canvas.height = Math.max(1, Math.floor(viewport.height));
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) throw new Error("تعذر تجهيز مساحة رسم صفحة PDF رقم " + pageNumber + ".");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: context, viewport }).promise;
+        const image = canvas.toDataURL("image/jpeg", 0.58);
+        totalImageBytes += image.length;
+        if (totalImageBytes > 3_500_000) throw new Error("الصور الناتجة تجاوزت حد التخزين الآمن. استورد عدداً أقل من الصفحات.");
+        const textContent = await page.getTextContent();
+        const text = textContent.items
+          .filter(item => typeof item.str === "string" && item.str.trim())
+          .map(item => item.str.trim())
+          .join(" ")
+          .trim();
+        const heading = (text || "صفحة " + pageNumber).slice(0, 100);
+        imported.push({
+          title: "صفحة " + String(pageNumber).padStart(2, "0") + " — " + heading,
+          duration: 8,
+          transition: pageNumber === 1 ? "تلاشي" : "انزلاق",
+          screenText: text || "صفحة " + pageNumber,
+          voice: "",
+          visual: "صفحة مستوردة من ملف PDF: " + file.name,
+          robot: false,
+          image
+        });
+        page.cleanup();
+        canvas.width = 1;
+        canvas.height = 1;
+      }
+      scenes = imported;
+      current = 0;
+      $("projectName").value = file.name.replace(/\.pdf$/i, "");
+      $("videoTitle").value = file.name.replace(/\.pdf$/i, "");
+      save();
+      renderPreview();
+      renderEditor();
+      alert("تم استيراد " + imported.length + " صفحة من PDF وتحويلها إلى مشاهد. راجع النصوص والمدد قبل التصدير.");
+      await pdf.destroy();
+    } catch (error) {
+      alert("تعذر استيراد PDF: " + (error?.message || String(error)));
+    } finally {
+      button.disabled = false;
+      button.textContent = "استيراد PDF";
       event.target.value = "";
     }
   };
