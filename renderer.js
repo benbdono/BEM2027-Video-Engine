@@ -29,17 +29,15 @@
         });
       }
       if (!window.FFmpegWASM?.FFmpeg) throw new Error("لم يتم العثور على واجهة FFmpeg في المكتبة المحمّلة.");
-      // The UMD bundle creates a separate webpack worker chunk. When loaded
-      // from a CDN its relative worker URL can resolve against the GitHub Pages
-      // origin and fail with a Worker SecurityError. Fetch that exact chunk and
-      // pass it explicitly as classWorkerURL.
-      const packageURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd";
-      const coreURLBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-      const [classWorkerURL, coreURL, wasmURL] = await Promise.all([
-        fetchAsBlobURL(packageURL + "/814.ffmpeg.js", "text/javascript"),
+      // Use an unbundled same-origin module worker. The UMD worker chunk is
+      // webpack-lazy-loaded and cannot resolve a Blob URL as a module request.
+      // The worker module and its imports are hosted with this GitHub Pages app.
+      const coreURLBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+      const [coreURL, wasmURL] = await Promise.all([
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript"),
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm")
       ]);
+      const classWorkerURL = new URL("vendor/ffmpeg/worker.js", window.location.href).href;
       const ffmpeg = new window.FFmpegWASM.FFmpeg();
       ffmpeg.on("log", ({ message }) => {
         if (message) {
@@ -48,12 +46,8 @@
         }
       });
       try {
-        // classWorkerURL belongs to the load configuration, not the constructor.
-        // Passing it here makes FFmpeg use the same-origin Blob worker instead
-        // of resolving 814.ffmpeg.js against the CDN script URL.
         await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
       } finally {
-        URL.revokeObjectURL(classWorkerURL);
         URL.revokeObjectURL(coreURL);
         URL.revokeObjectURL(wasmURL);
       }

@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 
-const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md"];
+const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js"];
 for (const file of required) {
   await access(file, constants.R_OK);
   console.log("✓", file);
@@ -41,10 +41,14 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
 }
 console.log("✓ MP4 conversion UI and H.264 pipeline");
 
-if (!renderer.includes("classWorkerURL") || !renderer.includes("/814.ffmpeg.js") || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
-  throw new Error("FFmpeg UMD class worker must be passed through the load configuration.");
+if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('/dist/esm') || !renderer.includes('/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
+  throw new Error("FFmpeg must use the same-origin ESM worker and ESM core.");
 }
-if (renderer.includes("new window.FFmpegWASM.FFmpeg({ classWorkerURL })")) {
-  throw new Error("classWorkerURL must not be passed to the FFmpeg constructor.");
+const worker = await readFile("vendor/ffmpeg/worker.js", "utf8");
+for (const dependency of ['./const.js', './errors.js']) {
+  if (!worker.includes(dependency)) throw new Error("Missing local FFmpeg worker dependency: " + dependency);
 }
-console.log("✓ FFmpeg UMD class worker is passed through ffmpeg.load()");
+if (renderer.includes("/814.ffmpeg.js")) {
+  throw new Error("The webpack UMD worker chunk must not be used.");
+}
+console.log("✓ FFmpeg uses a same-origin ESM worker with the ESM core");
