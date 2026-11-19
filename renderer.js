@@ -4,6 +4,99 @@
   if (!button) return;
 
   const setStatus = (message) => { $("renderStatus").textContent = message; };
+  let lastWebmBlob = null;
+  let ffmpegInstance = null;
+  let ffmpegLoadPromise = null;
+
+  const fetchAsBlobURL = async (url, mime) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("تعذر تحميل مكوّن الترميز: " + response.status);
+    return URL.createObjectURL(new Blob([await response.arrayBuffer()], { type: mime }));
+  };
+
+  const loadFFmpeg = async () => {
+    if (ffmpegInstance) return ffmpegInstance;
+    if (ffmpegLoadPromise) return ffmpegLoadPromise;
+    ffmpegLoadPromise = (async () => {
+      if (!window.FFmpegWASM) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js";
+          script.crossOrigin = "anonymous";
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("تعذر تحميل مكتبة FFmpeg من CDN."));
+          document.head.appendChild(script);
+        });
+      }
+      if (!window.FFmpegWASM?.FFmpeg) throw new Error("لم يتم العثور على واجهة FFmpeg في المكتبة المحمّلة.");
+      const ffmpeg = new window.FFmpegWASM.FFmpeg();
+      ffmpeg.on("log", ({ message }) => {
+        if (message && /error|failed|invalid/i.test(message)) setStatus("FFmpeg: " + message.slice(-180));
+      });
+      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+      const [coreURL, wasmURL] = await Promise.all([
+        fetchAsBlobURL(baseURL + "/ffmpeg-core.js", "text/javascript"),
+        fetchAsBlobURL(baseURL + "/ffmpeg-core.wasm", "application/wasm")
+      ]);
+      try {
+        await ffmpeg.load({ coreURL, wasmURL });
+      } finally {
+        URL.revokeObjectURL(coreURL);
+        URL.revokeObjectURL(wasmURL);
+      }
+      ffmpegInstance = ffmpeg;
+      return ffmpeg;
+    })().catch(error => {
+      ffmpegLoadPromise = null;
+      throw error;
+    });
+    return ffmpegLoadPromise;
+  };
+
+  const convertLastVideoToMp4 = async () => {
+    const convertButton = $("convertMp4Btn");
+    const mp4Link = $("renderMp4Download");
+    if (!lastWebmBlob) {
+      setStatus("أنشئ فيديو WebM أولاً، ثم حوّله إلى MP4.");
+      return;
+    }
+    convertButton.disabled = true;
+    mp4Link.hidden = true;
+    let ffmpeg;
+    try {
+      setStatus("جارٍ تحميل محرك MP4 لأول مرة (حوالي 31 MB). قد يستغرق ذلك بعض الوقت...");
+      ffmpeg = await loadFFmpeg();
+      setStatus("جارٍ تجهيز ملف الفيديو للتحويل...");
+      await ffmpeg.writeFile("bem2027-input.webm", new Uint8Array(await lastWebmBlob.arrayBuffer()));
+      setStatus("جارٍ تحويل الفيديو إلى MP4. لا تغلق الصفحة...");
+      await ffmpeg.exec([
+        "-i", "bem2027-input.webm",
+        "-map", "0:v:0", "-map", "0:a?",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "24",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+        "-movflags", "+faststart", "bem2027-output.mp4"
+      ]);
+      const output = await ffmpeg.readFile("bem2027-output.mp4");
+      const mp4Blob = new Blob([output], { type: "video/mp4" });
+      if (mp4Blob.size < 1024) throw new Error("ملف MP4 الناتج غير صالح أو فارغ.");
+      const oldUrl = mp4Link.dataset.objectUrl;
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      const url = URL.createObjectURL(mp4Blob);
+      mp4Link.href = url;
+      mp4Link.dataset.objectUrl = url;
+      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^\\p{L}\\p{N}-]+/gu, "-") + ".mp4";
+      mp4Link.hidden = false;
+      setStatus("اكتمل التحويل. أصبح ملف MP4 جاهزاً للتحميل.");
+      try { await ffmpeg.deleteFile("bem2027-input.webm"); } catch (_) {}
+      try { await ffmpeg.deleteFile("bem2027-output.mp4"); } catch (_) {}
+    } catch (error) {
+      setStatus("تعذر إنشاء MP4: " + (error?.message || String(error)) + " — يمكنك الاحتفاظ بملف WebM.");
+    } finally {
+      convertButton.disabled = false;
+    }
+  };
+
+  $("convertMp4Btn")?.addEventListener("click", convertLastVideoToMp4);
   const sleepFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
   const wrapText = (ctx, text, maxWidth) => {
     const words = String(text || "").split(/\s+/);
@@ -195,6 +288,9 @@
     recorder.stop();
     await done;
     const blob = new Blob(chunks,{type:mime});
+    lastWebmBlob = blob;
+    $("convertMp4Btn").disabled = false;
+    $("renderMp4Download").hidden = true;
     const url = URL.createObjectURL(blob);
     const link = $("renderDownload");
     link.href = url;
