@@ -248,6 +248,7 @@
     let audioUrl = null;
     let recorder = null;
     let recordingDone = null;
+    let recorderFailure = null;
     let recordingStarted = false;
     const chunks = [];
     button.disabled = true;
@@ -280,10 +281,12 @@
       if (!mime) throw new Error("لم يتوفر ترميز WebM في هذا المتصفح.");
 
       recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
-      recordingDone = new Promise((resolve, reject) => {
+      recordingDone = new Promise(resolve => {
         recorder.addEventListener("stop", resolve, { once: true });
+      });
+      const recorderFailed = new Promise(resolve => {
         recorder.addEventListener("error", event => {
-          reject(event.error || new Error("حدث خطأ أثناء تسجيل الفيديو."));
+          resolve(event.error || new Error("حدث خطأ أثناء تسجيل الفيديو."));
         }, { once: true });
       });
       recorder.addEventListener("dataavailable", event => {
@@ -311,7 +314,11 @@
           await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image);
           $("renderProgress").value = Math.min(99, Math.round((elapsedTotal + elapsed) / totalMs * 100));
           setStatus("جارٍ إنشاء المشهد " + (i + 1) + " من " + scenes.length + "...");
-          await sleepFrame();
+          recorderFailure = await Promise.race([
+            sleepFrame().then(() => null),
+            recorderFailed
+          ]);
+          if (recorderFailure) throw recorderFailure;
         }
         elapsedTotal += duration;
       }
@@ -320,6 +327,7 @@
       recorder.stop();
       recordingStarted = false;
       await recordingDone;
+      if (recorderFailure) throw recorderFailure;
       if (!chunks.length) throw new Error("لم ينتج المسجل أي بيانات فيديو.");
 
       const blob = new Blob(chunks, { type: mime });
