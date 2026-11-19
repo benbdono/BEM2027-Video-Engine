@@ -86,7 +86,7 @@ console.log("✓ PDF import controls and page-to-scene renderer");
 
 const visualApp = await readFile("app.js", "utf8");
 if (!visualApp.includes('id="sGraphic"') || !visualApp.includes('s.graphic') ||
-    !visualApp.includes('id="brandLogoFile"') || !visualApp.includes('bemLogo')) {
+    !html.includes('id="brandLogoFile"') || !visualApp.includes('bemLogo')) {
   throw new Error("Educational graphic controls or reusable brand logo upload are missing.");
 }
 if (!renderer.includes("drawEducationalGraphic") || !renderer.includes("resolveGraphic") ||
