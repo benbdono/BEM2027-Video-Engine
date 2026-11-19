@@ -156,6 +156,45 @@
     img.onerror = () => resolve(null);
     img.src = src;
   });
+  const resolveGraphic = scene => {
+    if (scene.graphic && scene.graphic !== "auto") return scene.graphic;
+    if (scene.graphic === "none") return "none";
+    const text = [scene.title,scene.screenText,scene.visual].join(" ");
+    if (/تاريخ|زمن|مرحلة|سنة|قرن|تسلسل/.test(text)) return "timeline";
+    if (/دورة|مراحل|دوران|تكاثر|ماء|تنفس/.test(text)) return "cycle";
+    if (/معادلة|هندسة|زاوية|دائرة|مثلث|قطر|محيط|مساحة/.test(text)) return "geometry";
+    if (/رسم بياني|إحصاء|نسبة|تزايد|تناقص|دالة|منحنى/.test(text)) return "chart";
+    if (/خلية|ذرة|جسم|قلب|جهاز|علوم|طاقة|كهرباء/.test(text)) return "science";
+    return "geometry";
+  };
+  const drawEducationalGraphic = (ctx, kind, elapsed) => {
+    if (!kind || kind === "none") return;
+    const w=ctx.canvas.width,h=ctx.canvas.height, t=elapsed/1000;
+    const cx=w*.31, cy=h*.55, unit=Math.min(w,h)*.19;
+    ctx.save(); ctx.translate(cx,cy); ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.shadowColor="#36d6c5"; ctx.shadowBlur=18; ctx.strokeStyle="#36d6c5"; ctx.fillStyle="rgba(54,214,197,.12)"; ctx.lineWidth=Math.max(5,unit*.025);
+    const glow="#36d6c5", gold="#ffc857", blue="#45bfff";
+    if(kind==="geometry"){
+      ctx.strokeStyle=gold; ctx.beginPath(); ctx.moveTo(-unit,-unit*.45); ctx.lineTo(unit,unit*.55); ctx.lineTo(-unit,unit*.55); ctx.closePath(); ctx.stroke();
+      ctx.strokeStyle=blue; ctx.beginPath(); ctx.arc(0,0,unit*.63,Math.PI,Math.PI*2); ctx.stroke();
+      ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(-unit,unit*.55,unit*.055,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font="600 "+Math.round(unit*.16)+"px Arial"; ctx.textAlign="center"; ctx.fillText("A",0,-unit*.62); ctx.fillText("B",-unit*.78,unit*.78); ctx.fillText("C",unit*.78,unit*.78);
+    } else if(kind==="timeline"){
+      ctx.strokeStyle=blue; ctx.beginPath(); ctx.moveTo(-unit*1.25,0); ctx.lineTo(unit*1.25,0); ctx.stroke();
+      for(let i=0;i<4;i++){const x=-unit*1.1+i*unit*.73;ctx.fillStyle=i%2?gold:glow;ctx.beginPath();ctx.arc(x,0,unit*.075,0,Math.PI*2);ctx.fill();ctx.strokeStyle=i%2?gold:glow;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,-unit*(.45+.08*Math.sin(t*2+i)));ctx.stroke();}
+      ctx.fillStyle="#fff";ctx.font="600 "+Math.round(unit*.13)+"px Arial";ctx.textAlign="center";["1","2","3","4"].forEach((v,i)=>ctx.fillText(v,-unit*1.1+i*unit*.73,unit*.32));
+    } else if(kind==="cycle"){
+      for(let i=0;i<3;i++){const a=-Math.PI/2+i*Math.PI*2/3+t*.12,x=Math.cos(a)*unit*.72,y=Math.sin(a)*unit*.58;ctx.fillStyle=i===1?"rgba(255,200,87,.2)":"rgba(54,214,197,.18)";ctx.strokeStyle=i===1?gold:glow;ctx.beginPath();ctx.arc(x,y,unit*.24,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(x*.68,y*.68);ctx.lineTo(x*.9,y*.9);ctx.stroke();}
+      ctx.strokeStyle=blue;ctx.beginPath();ctx.arc(0,0,unit*1.05,.2,Math.PI*1.85);ctx.stroke();
+    } else if(kind==="chart"){
+      ctx.strokeStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.moveTo(-unit*1.15,unit*.75);ctx.lineTo(unit*1.15,unit*.75);ctx.moveTo(-unit*1.15,unit*.75);ctx.lineTo(-unit*1.15,-unit*.8);ctx.stroke();
+      ctx.strokeStyle=gold;ctx.beginPath();for(let i=0;i<=40;i++){const x=-unit+i*unit*2/40,y=unit*.45-Math.sin(i/40*Math.PI*1.5)*unit*.95+(i/40)*unit*.2;if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();
+      ctx.fillStyle=blue;for(let i=0;i<4;i++){ctx.fillRect(-unit*.9+i*unit*.58,unit*.45-i*unit*.23,unit*.25,unit*.3+i*unit*.23);}
+    } else if(kind==="science"){
+      ctx.strokeStyle=blue;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,.55,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=gold;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,-.55,0,Math.PI*2);ctx.stroke();ctx.fillStyle=glow;ctx.beginPath();ctx.arc(0,0,unit*.13,0,Math.PI*2);ctx.fill();for(let i=0;i<3;i++){const a=t*.8+i*Math.PI*2/3;ctx.fillStyle=i===1?gold:blue;ctx.beginPath();ctx.arc(Math.cos(a)*unit*.88,Math.sin(a)*unit*.35,unit*.08,0,Math.PI*2);ctx.fill();}
+    }
+    ctx.restore();
+  };
   const drawScene = async (ctx, scene, project, index, total, elapsed, image) => {
     const w = ctx.canvas.width, h = ctx.canvas.height;
     const motion = elapsed / 1000;
@@ -192,11 +231,15 @@
       ctx.drawImage(image, (w-iw)/2, (h-ih)/2, iw, ih);
       ctx.restore();
     }
+    const brandLogo = await loadImage(localStorage.getItem("bemLogo") || "");
+    if (brandLogo) { const scale=Math.min(1,Math.min(110/brandLogo.width,80/brandLogo.height)); ctx.drawImage(brandLogo,90,35,brandLogo.width*scale,brandLogo.height*scale); }
     ctx.direction = "rtl"; ctx.textAlign = "right";
     ctx.fillStyle = "#f5f5ff"; ctx.font = "700 42px Alexandria, Arial";
     ctx.fillText("BEM", w-90, 85);
     ctx.fillStyle = "#36d6c5"; ctx.fillText("2027", w-190, 85);
-    const showRobot = scene.robot !== false;
+    const graphicKind = resolveGraphic(scene);
+    drawEducationalGraphic(ctx, graphicKind, elapsed);
+    const showRobot = scene.robot !== false && graphicKind === "none";
     if (showRobot) drawRobot(ctx, w*.12, h*.34 + Math.sin(motion*2)*12, Math.min(w,h)*.00115);
     const title = scene.screenText || scene.title || "";
     ctx.fillStyle = "#36d6c5"; ctx.font = "600 32px Alexandria, Arial";
