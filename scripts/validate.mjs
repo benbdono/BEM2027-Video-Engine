@@ -75,7 +75,7 @@ if (!html.includes('id="presentationBtn"') || !html.includes('id="presentationFi
 }
 console.log("✓ PowerPoint PPTX import controls and slide-to-scene parser");
 
-const app = await readFile("app.js", "utf8");
+
 if (!html.includes('id="pdfBtn"') || !html.includes('id="pdfFile"') ||
     !app.includes('pdfjs-dist@4.10.38/build/pdf.mjs') ||
     !app.includes('pdf.worker.mjs') || !app.includes('page.render') ||
