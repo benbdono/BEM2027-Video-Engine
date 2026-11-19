@@ -29,18 +29,28 @@
         });
       }
       if (!window.FFmpegWASM?.FFmpeg) throw new Error("لم يتم العثور على واجهة FFmpeg في المكتبة المحمّلة.");
-      const ffmpeg = new window.FFmpegWASM.FFmpeg();
-      ffmpeg.on("log", ({ message }) => {
-        if (message && /error|failed|invalid/i.test(message)) setStatus("FFmpeg: " + message.slice(-180));
-      });
-      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-      const [coreURL, wasmURL] = await Promise.all([
-        fetchAsBlobURL(baseURL + "/ffmpeg-core.js", "text/javascript"),
-        fetchAsBlobURL(baseURL + "/ffmpeg-core.wasm", "application/wasm")
+      // The UMD bundle creates a separate webpack worker chunk. When loaded
+      // from a CDN its relative worker URL can resolve against the GitHub Pages
+      // origin and fail with a Worker SecurityError. Fetch that exact chunk and
+      // pass it explicitly as classWorkerURL.
+      const packageURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd";
+      const coreURLBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+      const [classWorkerURL, coreURL, wasmURL] = await Promise.all([
+        fetchAsBlobURL(packageURL + "/814.ffmpeg.js", "text/javascript"),
+        fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript"),
+        fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm")
       ]);
+      const ffmpeg = new window.FFmpegWASM.FFmpeg({ classWorkerURL });
+      ffmpeg.on("log", ({ message }) => {
+        if (message) {
+          console.info("[BEM2027 FFmpeg]", message);
+          if (/error|failed|invalid/i.test(message)) setStatus("FFmpeg: " + message.slice(-220));
+        }
+      });
       try {
         await ffmpeg.load({ coreURL, wasmURL });
       } finally {
+        URL.revokeObjectURL(classWorkerURL);
         URL.revokeObjectURL(coreURL);
         URL.revokeObjectURL(wasmURL);
       }
