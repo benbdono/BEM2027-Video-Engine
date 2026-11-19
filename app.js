@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"0.1.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"0.2.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -50,8 +50,10 @@
       <label class="wide">النص الظاهر على الشاشة<textarea id="sScreen"></textarea></label>
       <label class="wide">نص التعليق الصوتي<textarea id="sVoice"></textarea></label>
       <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>
+      <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
       </div><div class="editor-actions"><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
     $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;
+    $("sImage").addEventListener("change", async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("يرجى اختيار ملف صورة.");return;}const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const img=new Image();img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);s.image=canvas.toDataURL("image/jpeg",0.82);save();alert("تم حفظ صورة المشهد.");};img.onerror=()=>alert("تعذر قراءة الصورة.");img.src=dataUrl;});
     $("applyScene").onclick=()=>{
       s.title=$("sTitle").value.trim()||"مشهد جديد";s.duration=Math.max(1,Math.min(300,Number($("sDuration").value)||1));s.transition=$("sTransition").value;s.robot=$("sRobot").value==="true";s.screenText=$("sScreen").value;s.voice=$("sVoice").value;s.visual=$("sVisual").value;save();renderPreview();renderEditor();
     };
@@ -60,7 +62,7 @@
   document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.tab===b.dataset.tab));
     document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===b.dataset.tab));
-    $("pageTitle").textContent={studio:"استوديو الفيديو",scenes:"إدارة المشاهد",identity:"الهوية البصرية"}[b.dataset.tab];
+    $("pageTitle").textContent={studio:"استوديو الفيديو",scenes:"إدارة المشاهد",identity:"الهوية البصرية",render:"إنتاج الفيديو"}[b.dataset.tab];
   }));
   ["projectName","subject","videoTitle","robotToggle","numberToggle"].forEach(id=>$(id).addEventListener("change",()=>{save();renderPreview();}));
   $("addScene").onclick=()=>{scenes.push({title:"مشهد جديد",duration:10,transition:"تلاشي",screenText:"اكتب النص الظاهر هنا",voice:"أضف نص التعليق الصوتي.",visual:"صف شكل المشهد والعناصر البصرية.",robot:false});current=scenes.length-1;save();renderPreview();renderEditor();};
@@ -72,5 +74,5 @@
   $("importBtn").onclick=()=>$("importFile").click();
   $("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.scenes)||!data.scenes.length)throw Error("ملف المشروع لا يحتوي على مشاهد صحيحة");scenes=data.scenes;current=0;if(data.project){$("projectName").value=data.project.name||"";$("subject").value=data.project.subject||"العلوم الطبيعية";$("videoTitle").value=data.project.title||"";ratio=data.project.ratio||"16:9";}save();renderPreview();renderEditor();alert("تم استيراد المشروع بنجاح.");}catch(err){alert("تعذر استيراد الملف: "+err.message);}e.target.value="";};
   const oldProject=JSON.parse(localStorage.getItem("bemProject")||"null");if(oldProject){$("projectName").value=oldProject.name||$("projectName").value;$("subject").value=oldProject.subject||$("subject").value;$("videoTitle").value=oldProject.title||$("videoTitle").value;ratio=oldProject.ratio||ratio;}
-  renderPreview();renderEditor();
+  renderPreview();renderEditor();save();
 })();
