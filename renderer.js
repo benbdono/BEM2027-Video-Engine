@@ -58,6 +58,23 @@
   const drawScene = async (ctx, scene, project, index, total, elapsed, image) => {
     const w = ctx.canvas.width, h = ctx.canvas.height;
     const motion = elapsed / 1000;
+    const phase = Math.min(1, elapsed / 750);
+    const transition = scene.transition || "تلاشي";
+    ctx.save();
+    if (transition === "انزلاق") {
+      ctx.translate(-w * (1 - phase), 0);
+    } else if (transition === "تكبير") {
+      const scale = .88 + .12 * phase;
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(scale, scale);
+      ctx.translate(-w / 2, -h / 2);
+    } else if (transition === "مسح جانبي") {
+      ctx.beginPath();
+      ctx.rect(0, 0, w * phase, h);
+      ctx.clip();
+    } else if (transition === "تلاشي") {
+      ctx.globalAlpha = phase;
+    }
     const gradient = ctx.createLinearGradient(0, 0, w, h);
     gradient.addColorStop(0, "#101421");
     gradient.addColorStop(.58, "#211d43");
@@ -96,8 +113,7 @@
     ctx.fillStyle = "#aeb3ca"; ctx.font = "24px Alexandria, Arial";
     ctx.textAlign = "left"; ctx.fillText("ملخصات BEM2027", 90, h-95);
     ctx.textAlign = "right"; ctx.fillText(String(index+1).padStart(2,"0")+" / "+String(total).padStart(2,"0"), w-90, h-95);
-    const fade = Math.max(0, 1 - elapsed/550);
-    if (fade > 0) { ctx.fillStyle = "rgba(5,7,15,"+fade+")"; ctx.fillRect(0,0,w,h); }
+    ctx.restore();
   };
 
   button.addEventListener("click", async () => {
@@ -112,9 +128,16 @@
     const ratio = projectData?.ratio || "16:9";
     const [rw,rh] = ratio.split(":").map(Number);
     const canvas = document.createElement("canvas");
-    const landscape = rw >= rh;
-    canvas.width = landscape ? 1920 : (rw===1 ? 1080 : 1080);
-    canvas.height = landscape ? 1080 : (rh===1 ? 1080 : 1920);
+    if (rw === rh) {
+      canvas.width = 1080;
+      canvas.height = 1080;
+    } else if (rw > rh) {
+      canvas.width = 1920;
+      canvas.height = 1080;
+    } else {
+      canvas.width = 1080;
+      canvas.height = 1920;
+    }
     const ctx = canvas.getContext("2d");
     const stream = canvas.captureStream(30);
     let audioContext, audioElement, audioUrl;
