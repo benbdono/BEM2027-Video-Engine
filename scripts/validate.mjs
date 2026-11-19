@@ -69,7 +69,7 @@ console.log("✓ FFmpeg uses pinned native ESM, same-origin module worker and si
 
 const app = await readFile("app.js", "utf8");
 if (!html.includes('id="presentationBtn"') || !html.includes('id="presentationFile"') ||
-    !app.includes('jszip@3.10.1/+esm') || !app.includes('ppt/slides/slide') ||
+    !app.includes('jszip@3.10.1/+esm') || !app.includes("slideFiles") ||
     !app.includes('تم استيراد')) {
   throw new Error("PowerPoint PPTX import controls or slide parser are missing.");
 }
