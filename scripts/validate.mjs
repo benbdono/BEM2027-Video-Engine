@@ -84,6 +84,21 @@ if (!html.includes('id="pdfBtn"') || !html.includes('id="pdfFile"') ||
 }
 console.log("✓ PDF import controls and page-to-scene renderer");
 
+const visualApp = await readFile("app.js", "utf8");
+if (!visualApp.includes('id="sGraphic"') || !visualApp.includes('s.graphic') ||
+    !html.includes('id="brandLogoFile"') || !visualApp.includes('bemLogo')) {
+  throw new Error("Educational graphic controls or reusable brand logo upload are missing.");
+}
+if (!renderer.includes("drawEducationalGraphic") || !renderer.includes("resolveGraphic") ||
+    !renderer.includes('scene.graphic') || !renderer.includes('localStorage.getItem("bemLogo")')) {
+  throw new Error("Canvas renderer is missing animated educational diagram or brand logo support.");
+}
+for (const graphic of ["geometry", "timeline", "cycle", "chart", "science"]) {
+  if (!renderer.includes('kind==="' + graphic + '"')) throw new Error("Missing educational graphic renderer: " + graphic);
+}
+console.log("✓ Animated educational diagrams, scene graphic selection and reusable brand logo");
+
+
 const manifest = await readFile("manifest.webmanifest", "utf8");
 const sw = await readFile("sw.js", "utf8");
 if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.register') ||

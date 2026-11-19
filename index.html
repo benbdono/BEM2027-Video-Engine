@@ -22,7 +22,7 @@
     <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
     <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
     <button class="nav" data-tab="render">▶ <span>إنتاج الفيديو</span></button>
-    <div class="side-foot"><i></i><span><b>الإصدار 0.8.0</b><small>يعمل محلياً على جهازك</small></span></div>
+    <div class="side-foot"><i></i><span><b>الإصدار 0.9.0</b><small>يعمل محلياً على جهازك</small></span></div>
   </aside>
 
   <main class="main">
@@ -85,6 +85,7 @@
 
     <section class="panel" id="identity">
       <div class="section-head"><div><h2>الهوية البصرية</h2><p>الأسلوب الثابت الذي يميّز فيديوهات ملخصات BEM2027.</p></div></div>
+      <div class="render-card brand-assets"><h3>شعار المنصة</h3><p class="render-help">ارفع الشعار مرة واحدة ليظهر في تصدير الفيديوهات. يُحفظ محلياً في هذا المتصفح.</p><div class="brand-upload-row"><img id="brandLogoPreview" alt="معاينة شعار BEM2027"><label class="btn ghost" for="brandLogoFile">اختيار صورة الشعار</label><input id="brandLogoFile" type="file" accept="image/*" hidden></div></div>
       <div class="identity-grid">
         <article class="identity-card"><div class="robot-stage"><div class="robot"><div class="antenna"></div><div class="head"><div class="eyes"><i></i><i></i></div><div class="mouth"></div></div><div class="neck"></div><div class="body"><span class="core"></span></div></div></div><h3>الروبوت التعليمي</h3><p>شخصية مستقبلية تجمع بين الذكاء والمرح، وتظهر في المشاهد المهمة فقط.</p><span class="tag">الشخصية المعتمدة</span></article>
         <article class="identity-card"><div class="swatches"><i></i><i></i><i></i><i></i></div><h3>لوحة الألوان</h3><p>خلفيات داكنة مع البنفسجي والفيروزي لإبراز المعلومات.</p><div class="codes"><code>#10111B</code><code>#6C63FF</code><code>#36D6C5</code></div></article>
@@ -92,11 +93,11 @@
       </div>
       <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
     </section>
-    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.8.0</span></footer>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.9.0</span></footer>
   </main>
 </div>
-<script src="renderer.js?v=0.8.0"></script>
-<script src="app.js?v=0.8.0"></script>
+<script src="renderer.js?v=0.9.0"></script>
+<script src="app.js?v=0.9.0"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.warn("PWA offline cache unavailable:", error)));</script>
 </body>
 </html>
