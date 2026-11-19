@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"0.8.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -25,9 +25,25 @@
     $("progress").style.width=`${((current+1)/scenes.length)*100}%`;
     $("robot").style.display=s.robot && $("robotToggle").checked?"block":"none";
     $("sceneCount").style.visibility=$("numberToggle").checked?"visible":"hidden";
-    $("preview").style.backgroundImage = s.image
-      ? 'linear-gradient(115deg,rgba(12,14,25,.88),rgba(19,18,42,.82)),url("' + s.image + '")'
-      : "";
+    const preview = $("preview");
+    const previewToken = (preview.dataset.assetToken = String(Date.now()) + "-" + current);
+    const previewSource = s.image || "";
+    if (s.imageAssetId && window.BEMMedia) {
+      window.BEMMedia.getBlob(s.imageAssetId).then(blob => {
+        if (preview.dataset.assetToken !== previewToken) return;
+        if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
+        preview.dataset.assetUrl = blob ? URL.createObjectURL(blob) : "";
+        preview.style.backgroundImage = blob
+          ? 'linear-gradient(115deg,rgba(12,14,25,.78),rgba(19,18,42,.72)),url("' + preview.dataset.assetUrl + '")'
+          : "";
+      }).catch(() => { preview.style.backgroundImage = ""; });
+    } else {
+      if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
+      preview.dataset.assetUrl = "";
+      preview.style.backgroundImage = previewSource
+        ? 'linear-gradient(115deg,rgba(12,14,25,.88),rgba(19,18,42,.82)),url("' + previewSource + '")'
+        : "";
+    }
     document.querySelectorAll(".preview").forEach(el=>el.style.aspectRatio=ratio.replace(":"," / "));
     renderList();
   };
@@ -262,6 +278,16 @@
       event.target.value = "";
     }
   };
+
+  window.addEventListener("bem-media-selected", event => {
+    const assetId = event.detail?.id;
+    if (!assetId || !scenes[current]) return;
+    scenes[current].imageAssetId = assetId;
+    delete scenes[current].image;
+    save();
+    renderPreview();
+    alert("تم ربط الصورة بالمشهد الحالي. ستُحمّل من مكتبة الوسائط عند المعاينة والتصدير.");
+  });
 
   // Brand logo asset: compressed locally and reused by every rendered scene.
   const logoInput = $("brandLogoFile");
