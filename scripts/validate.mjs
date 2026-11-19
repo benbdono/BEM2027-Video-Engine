@@ -21,8 +21,8 @@ for (const asset of ["styles.css"]) {
 console.log("✓ HTML asset references");
 
 const renderer = await readFile("renderer.js", "utf8");
-if (!html.includes("الإصدار 1.0.1") || html.includes("الإصدار 1.0.0")) {
-  throw new Error("Sidebar version label is stale; expected 1.0.1.");
+if (!html.includes("الإصدار 1.0.2") || html.includes("الإصدار 1.0.0")) {
+  throw new Error("Sidebar version label is stale; expected 1.0.2.");
 }
 for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
   if (!renderer.includes(transition)) {
@@ -110,7 +110,7 @@ if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.
   throw new Error("Installable PWA manifest or offline shell registration is incomplete.");
 }
 if (!html.includes('id="mediaLibraryFile"') || !html.includes('id="mediaLibraryGrid"') ||
-    !html.includes('media-library.js?v=1.0.1') || !sw.includes('media-library.js?v=1.0.1')) {
+    !html.includes('media-library.js?v=1.0.2') || !sw.includes('media-library.js?v=1.0.2')) {
   throw new Error("Reusable media library controls or PWA cache entry are missing.");
 }
 const mediaLibrary = await readFile("media-library.js", "utf8");
@@ -127,6 +127,13 @@ if (!mediaLibrary.includes("renderedObjectUrls.forEach(url=>URL.revokeObjectURL(
 const previewApp = await readFile("app.js", "utf8");
 if (!previewApp.includes("previewAssetToken") || !previewApp.includes("if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl)") ||
     !previewApp.includes("if (preview.dataset.assetToken === previewToken)")) throw new Error("Preview image URLs and stale asynchronous loads must be cleaned safely.");
+if (!renderer.includes('audioElement.preload = "metadata"') ||
+    !renderer.includes("audioElement.currentTime = 0") ||
+    !renderer.includes("firstSceneImage = await loadImage(scenes[0].image)") ||
+    !renderer.includes("Math.abs(audioMs - totalMs) > 2000")) {
+  throw new Error("Voice track metadata, first-scene preloading or duration warning is missing.");
+}
+console.log("✓ Voice metadata validation, first-frame preloading and duration mismatch warning");
 console.log("✓ IndexedDB media library, scene linking and renderer asset loading");
 console.log("✓ Media object URL cleanup for library, preview and failed scene loads");
 console.log("✓ Installable PWA manifest and offline app shell");
