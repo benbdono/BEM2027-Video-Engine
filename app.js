@@ -72,5 +72,5 @@
   $("importBtn").onclick=()=>$("importFile").click();
   $("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.scenes)||!data.scenes.length)throw Error("ملف المشروع لا يحتوي على مشاهد صحيحة");scenes=data.scenes;current=0;if(data.project){$("projectName").value=data.project.name||"";$("subject").value=data.project.subject||"العلوم الطبيعية";$("videoTitle").value=data.project.title||"";ratio=data.project.ratio||"16:9";}save();renderPreview();renderEditor();alert("تم استيراد المشروع بنجاح.");}catch(err){alert("تعذر استيراد الملف: "+err.message);}e.target.value="";};
   const oldProject=JSON.parse(localStorage.getItem("bemProject")||"null");if(oldProject){$("projectName").value=oldProject.name||$("projectName").value;$("subject").value=oldProject.subject||$("subject").value;$("videoTitle").value=oldProject.title||$("videoTitle").value;ratio=oldProject.ratio||ratio;}
-  renderPreview();renderEditor();
+  renderPreview();renderEditor();save();
 })();
