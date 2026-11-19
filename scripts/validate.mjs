@@ -9,7 +9,7 @@ for (const file of required) {
 
 const html = await readFile("index.html", "utf8");
 for (const script of ["renderer.js", "app.js"]) {
-  if (!html.includes('src="' + script + '"')) {
+  if (!new RegExp('src="' + script.replace(".", "\\.") + '(?:\\?[^"]*)?"').test(html)) {
     throw new Error("Missing script reference in index.html: " + script);
   }
 }
