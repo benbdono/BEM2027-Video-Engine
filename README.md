@@ -64,3 +64,12 @@
 - يحدد الإصدار الحالي ملف Web Worker المنفصل لحزمة UMD صراحةً عبر `classWorkerURL`، بدلاً من الاعتماد على المسار النسبي الافتراضي الذي قد يفشل عند تحميل المكتبة من CDN على GitHub Pages.
 - يجري تحويل ملفات المحرك إلى Blob URLs لتفادي قيود تحميل الموارد عبر النطاقات.
 - إذا استمر الفشل، يجب أخذ نص رسالة الحالة من واجهة الاستوديو؛ لا يُعد نجاح الفحص الآلي دليلاً على نجاح التحويل في كل متصفح.
+
+
+### FFmpeg worker loading fix
+
+The MP4 converter uses the FFmpeg 0.12.10 ESM core and a small same-origin
+module worker under `vendor/ffmpeg/`. This avoids the UMD bundle's webpack
+lazy-module lookup for a Blob URL, which can fail in browsers hosted on
+GitHub Pages. The worker is served with the application; the ESM core and
+WASM payload are fetched from jsDelivr and converted to Blob URLs at runtime.
