@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"0.6.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"0.7.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -88,6 +88,104 @@
   $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(project(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="BEM2027-video-project.json";a.click();URL.revokeObjectURL(a.href);};
   $("importBtn").onclick=()=>$("importFile").click();
   $("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.scenes)||!data.scenes.length)throw Error("ملف المشروع لا يحتوي على مشاهد صحيحة");scenes=data.scenes;current=0;if(data.project){$("projectName").value=data.project.name||"";$("subject").value=data.project.subject||"العلوم الطبيعية";$("videoTitle").value=data.project.title||"";ratio=data.project.ratio||"16:9";}save();renderPreview();renderEditor();alert("تم استيراد المشروع بنجاح.");}catch(err){alert("تعذر استيراد الملف: "+err.message);}e.target.value="";};
-  const oldProject=JSON.parse(localStorage.getItem("bemProject")||"null");if(oldProject){$("projectName").value=oldProject.name||$("projectName").value;$("subject").value=oldProject.subject||$("subject").value;$("videoTitle").value=oldProject.title||$("videoTitle").value;ratio=oldProject.ratio||ratio;}
+
+  // PowerPoint importer: converts slide text and the first embedded image into editable scenes.
+  const resolveZipPath = (base, target) => {
+    const parts = (base + "/" + target).split("/");
+    const out = [];
+    for (const part of parts) { if (!part || part === ".") continue; if (part === "..") out.pop(); else out.push(part); }
+    return out.join("/");
+  };
+  const blobToDataUrl = blob => new Promise((resolve,reject) => {
+    const reader = new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=reject; reader.readAsDataURL(blob);
+  });
+  const optimizeSlideImage = async dataUrl => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.78));
+    };
+    img.onerror = () => resolve("");
+    img.src = dataUrl;
+  });
+  $("presentationBtn").onclick = () => $("presentationFile").click();
+  $("presentationFile").onchange = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const button = $("presentationBtn");
+    button.disabled = true;
+    button.textContent = "جارٍ استيراد العرض...";
+    try {
+      if (file.size > 150 * 1024 * 1024) throw new Error("حجم العرض أكبر من 150 ميغابايت.");
+      const { default: JSZip } = await import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm");
+      const zip = await JSZip.loadAsync(file, { checkCRC32: true });
+      const slideFiles = Object.keys(zip.files)
+        .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+        .sort((x,y) => Number(x.match(/slide(\d+)/)[1]) - Number(y.match(/slide(\d+)/)[1]));
+      if (!slideFiles.length) throw new Error("لم يتم العثور على شرائح صالحة داخل ملف PPTX.");
+      if (slideFiles.length > 100) throw new Error("العرض يحتوي على أكثر من 100 شريحة. قسّمه إلى عروض أصغر.");
+      const imported = [];
+      for (let i=0; i<slideFiles.length; i++) {
+        const path = slideFiles[i];
+        const xmlText = await zip.file(path).async("string");
+        const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+        if (xml.querySelector("parsererror")) throw new Error("تعذر قراءة الشريحة رقم " + (i+1) + ".");
+        const paragraphs = [...xml.getElementsByTagNameNS("*","sp")]
+          .map(shape => [...shape.getElementsByTagNameNS("*","t")].map(node => node.textContent.trim()).filter(Boolean).join(" "))
+          .filter(Boolean);
+        const text = paragraphs.join("\n").trim();
+        const relPath = path.replace(/slide(\d+)\.xml$/, "_rels/slide$1.xml.rels");
+        let imageData = "";
+        const relFile = zip.file(relPath);
+        if (relFile) {
+          const relXml = new DOMParser().parseFromString(await relFile.async("string"), "application/xml");
+          const imageRef = xml.getElementsByTagNameNS("*","blip")[0]?.getAttribute("r:embed") ||
+            xml.getElementsByTagNameNS("*","blip")[0]?.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","embed");
+          if (imageRef) {
+            const relation = [...relXml.getElementsByTagNameNS("*","Relationship")].find(node => node.getAttribute("Id") === imageRef);
+            const target = relation?.getAttribute("Target");
+            if (target && !/^https?:/i.test(target)) {
+              const imagePath = resolveZipPath("ppt/slides", target);
+              const imageFile = zip.file(imagePath);
+              if (imageFile) {
+                const imageBlob = await imageFile.async("blob");
+                imageData = await optimizeSlideImage(await blobToDataUrl(imageBlob));
+              }
+            }
+          }
+        }
+        const firstLine = (text.split("\n").find(line => line.trim()) || "الشريحة " + (i+1)).slice(0,100);
+        imported.push({
+          title: "الشريحة " + String(i+1).padStart(2,"0") + " — " + firstLine,
+          duration: 8,
+          transition: i === 0 ? "تلاشي" : "انزلاق",
+          screenText: text || firstLine,
+          voice: "",
+          visual: "شريحة مستوردة من عرض PowerPoint: " + file.name,
+          robot: false,
+          ...(imageData ? { image: imageData } : {})
+        });
+      }
+      scenes = imported;
+      current = 0;
+      $("projectName").value = file.name.replace(/\.pptx$/i,"");
+      $("videoTitle").value = file.name.replace(/\.pptx$/i,"");
+      save();
+      renderPreview();
+      renderEditor();
+      alert("تم استيراد " + imported.length + " شريحة بنجاح. راجع النصوص والصور ومدد المشاهد قبل التصدير.");
+    } catch (error) {
+      alert("تعذر استيراد عرض PowerPoint: " + (error?.message || String(error)));
+    } finally {
+      button.disabled = false;
+      button.textContent = "استيراد عرض PPTX";
+      event.target.value = "";
+    }
+  };
+\n  const oldProject=JSON.parse(localStorage.getItem("bemProject")||"null");if(oldProject){$("projectName").value=oldProject.name||$("projectName").value;$("subject").value=oldProject.subject||$("subject").value;$("videoTitle").value=oldProject.title||$("videoTitle").value;ratio=oldProject.ratio||ratio;}
   renderPreview();renderEditor();save();
 })();
