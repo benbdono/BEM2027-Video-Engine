@@ -25,6 +25,9 @@
     $("progress").style.width=`${((current+1)/scenes.length)*100}%`;
     $("robot").style.display=s.robot && $("robotToggle").checked?"block":"none";
     $("sceneCount").style.visibility=$("numberToggle").checked?"visible":"hidden";
+    $("preview").style.backgroundImage = s.image
+      ? 'linear-gradient(115deg,rgba(12,14,25,.88),rgba(19,18,42,.82)),url("' + s.image + '")'
+      : "";
     document.querySelectorAll(".preview").forEach(el=>el.style.aspectRatio=ratio.replace(":"," / "));
     renderList();
   };
@@ -68,7 +71,19 @@
   $("addScene").onclick=()=>{scenes.push({title:"مشهد جديد",duration:10,transition:"تلاشي",screenText:"اكتب النص الظاهر هنا",voice:"أضف نص التعليق الصوتي.",visual:"صف شكل المشهد والعناصر البصرية.",robot:false});current=scenes.length-1;save();renderPreview();renderEditor();};
   $("prevBtn").onclick=()=>{current=(current-1+scenes.length)%scenes.length;renderPreview();};
   $("nextBtn").onclick=()=>{current=(current+1)%scenes.length;renderPreview();};
-  $("playBtn").onclick=()=>{if(playing){clearInterval(timer);playing=false;$("playBtn").textContent="▶ تشغيل المعاينة";return;}playing=true;$("playBtn").textContent="Ⅱ إيقاف المعاينة";timer=setInterval(()=>{current=(current+1)%scenes.length;renderPreview();},Math.max(1500,(scenes[current].duration||5)*250));};
+  $("playBtn").onclick=()=>{
+    if(playing){clearTimeout(timer);playing=false;$("playBtn").textContent="▶ تشغيل المعاينة";return;}
+    playing=true;$("playBtn").textContent="Ⅱ إيقاف المعاينة";
+    const advance=()=>{
+      if(!playing)return;
+      timer=setTimeout(()=>{
+        current=(current+1)%scenes.length;
+        renderPreview();
+        advance();
+      },Math.max(1000,(Number(scenes[current].duration)||5)*1000));
+    };
+    advance();
+  };
   document.querySelectorAll("[data-ratio]").forEach(b=>b.onclick=()=>{ratio=b.dataset.ratio;document.querySelectorAll("[data-ratio]").forEach(x=>x.classList.toggle("chosen",x===b));renderPreview();save();});
   $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(project(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="BEM2027-video-project.json";a.click();URL.revokeObjectURL(a.href);};
   $("importBtn").onclick=()=>$("importFile").click();
