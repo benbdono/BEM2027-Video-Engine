@@ -351,7 +351,15 @@
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
         const duration = durations[i];
-        const image = await loadImage(scene.image);
+        let image = await loadImage(scene.image);
+        let libraryImageUrl = null;
+        if (scene.imageAssetId && window.BEMMedia) {
+          const assetBlob = await window.BEMMedia.getBlob(scene.imageAssetId);
+          if (assetBlob) {
+            libraryImageUrl = URL.createObjectURL(assetBlob);
+            image = await loadImage(libraryImageUrl);
+          }
+        }
         const started = performance.now();
         while (performance.now() - started < duration) {
           const elapsed = performance.now() - started;
@@ -364,6 +372,7 @@
           ]);
           if (recorderFailure) throw recorderFailure;
         }
+        if (libraryImageUrl) URL.revokeObjectURL(libraryImageUrl);
         elapsedTotal += duration;
       }
 
