@@ -14,3 +14,5 @@
 .editor .image-upload{padding:10px;border:1px dashed #55517e;border-radius:8px;background:#10121d}
 button:disabled{opacity:.55;cursor:wait}
 @media(max-width:700px){.render-actions{align-items:stretch;flex-direction:column}.render-actions progress{width:100%}}
+
+.brand-assets{margin:0 0 18px}.brand-upload-row{display:flex;align-items:center;gap:16px;margin-top:12px}.brand-upload-row img{width:76px;height:76px;object-fit:contain;background:#10121d;border:1px solid var(--line);border-radius:10px;padding:7px}.brand-upload-row img[src]{display:block}.brand-upload-row label{cursor:pointer}
