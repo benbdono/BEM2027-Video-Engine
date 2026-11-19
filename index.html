@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10111b">
+  <meta name="description" content="BEM2027 Video Engine - استوديو إنتاج الفيديوهات التعليمية">
+  <title>BEM2027 | Video Engine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="#"><span class="brand-mark">B</span><span><b>BEM2027</b><small>VIDEO ENGINE</small></span></a>
+    <p class="nav-label">مساحة العمل</p>
+    <button class="nav active" data-tab="studio">▣ <span>استوديو الإنتاج</span></button>
+    <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
+    <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
+    <div class="side-foot"><i></i><span><b>الإصدار 0.1.0</b><small>يعمل محلياً على جهازك</small></span></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><p class="eyebrow">منصة إنتاج المحتوى التعليمي</p><h1 id="pageTitle">استوديو الفيديو</h1></div>
+      <div class="actions"><span id="saveState">● محفوظ محلياً</span><button class="btn ghost" id="importBtn">استيراد مشروع</button><button class="btn primary" id="exportBtn">تصدير المشروع ↓</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+    </header>
+
+    <section class="panel active" id="studio">
+      <div class="workspace">
+        <section>
+          <div class="section-head"><div><h2>معاينة الفيديو</h2><p>معاينة تصميمية للمشهد المحدد</p></div><span class="pill">16:9 · FULL HD</span></div>
+          <div class="preview" id="preview">
+            <div class="preview-aura"></div>
+            <div class="preview-head"><b>BEM <em>2027</em></b><span id="sceneCount">01 / 04</span></div>
+            <div class="preview-main">
+              <div class="robot" id="robot">
+                <div class="antenna"></div><div class="head"><span class="ear e1"></span><span class="ear e2"></span><div class="eyes"><i></i><i></i></div><div class="mouth"></div></div>
+                <div class="neck"></div><div class="body"><span class="core"></span><span class="body-line"></span></div>
+              </div>
+              <div class="copy"><span id="previewSubject">العلوم الطبيعية</span><h2 id="previewTitle">رحلتك نحو التفوق<br><strong>تبدأ من هنا</strong></h2><p id="previewText">نراجع، نفهم، ونتقدم خطوة بخطوة.</p></div>
+            </div>
+            <div class="preview-foot"><span>ملخصات BEM2027</span><div class="progress"><i id="progress"></i></div><span id="duration">00:08</span></div>
+          </div>
+          <div class="preview-controls"><button class="btn ghost" id="prevBtn">السابق ←</button><button class="btn primary" id="playBtn">▶ تشغيل المعاينة</button><button class="btn ghost" id="nextBtn">التالي →</button></div>
+          <div class="notice">ⓘ هذه معاينة بصرية للمشاهد. هذا الإصدار يصدر بيانات المشروع JSON ولا ينشئ فيديو MP4 أو تعليقاً صوتياً تلقائياً.</div>
+        </section>
+
+        <aside class="settings">
+          <div class="section-head"><div><h2>إعدادات المشروع</h2><p>الخصائص الأساسية للفيديو</p></div></div>
+          <label>اسم المشروع<input id="projectName" value="مراجعة مادة العلوم الطبيعية"></label>
+          <label>المادة التعليمية<select id="subject"><option>العلوم الطبيعية</option><option>الرياضيات</option><option>اللغة العربية</option><option>اللغة الفرنسية</option><option>اللغة الإنجليزية</option><option>التاريخ والجغرافيا</option><option>التربية الإسلامية</option><option>الفيزياء</option></select></label>
+          <label>عنوان الفيديو<input id="videoTitle" value="رحلتك نحو التفوق تبدأ من هنا"></label>
+          <label>أبعاد الفيديو<div class="segmented"><button class="chosen" data-ratio="16:9">16:9 أفقي</button><button data-ratio="9:16">9:16 عمودي</button><button data-ratio="1:1">1:1 مربع</button></div></label>
+          <div class="toggle-row"><span>إظهار الروبوت في المشهد</span><label class="switch"><input type="checkbox" id="robotToggle" checked><i></i></label></div>
+          <div class="toggle-row"><span>إظهار رقم المشهد</span><label class="switch"><input type="checkbox" id="numberToggle" checked><i></i></label></div>
+          <div class="identity-mini"><span>✦</span><div><b>هوية BEM2027 ثابتة</b><small>ألوان وشخصية موحدة لكل الفيديوهات.</small></div><button class="link" data-tab="identity">عرض</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="scenes">
+      <div class="section-head scene-top"><div><h2>إدارة المشاهد</h2><p>أضف المشاهد ورتّبها وعدّل محتواها ومدتها.</p></div><button class="btn primary" id="addScene">＋ إضافة مشهد</button></div>
+      <div class="scene-work"><div class="scene-list" id="sceneList"></div><div class="editor" id="editor"><div class="empty">اختر مشهداً من القائمة لبدء تعديله.</div></div></div>
+    </section>
+
+    <section class="panel" id="identity">
+      <div class="section-head"><div><h2>الهوية البصرية</h2><p>الأسلوب الثابت الذي يميّز فيديوهات ملخصات BEM2027.</p></div></div>
+      <div class="identity-grid">
+        <article class="identity-card"><div class="robot-stage"><div class="robot"><div class="antenna"></div><div class="head"><div class="eyes"><i></i><i></i></div><div class="mouth"></div></div><div class="neck"></div><div class="body"><span class="core"></span></div></div></div><h3>الروبوت التعليمي</h3><p>شخصية مستقبلية تجمع بين الذكاء والمرح، وتظهر في المشاهد المهمة فقط.</p><span class="tag">الشخصية المعتمدة</span></article>
+        <article class="identity-card"><div class="swatches"><i></i><i></i><i></i><i></i></div><h3>لوحة الألوان</h3><p>خلفيات داكنة مع البنفسجي والفيروزي لإبراز المعلومات.</p><div class="codes"><code>#10111B</code><code>#6C63FF</code><code>#36D6C5</code></div></article>
+        <article class="identity-card"><div class="type-sample"><b>أبسط طريق للفهم</b><span>تعلم بثقة. تقدّم بذكاء.</span></div><h3>الخط والطابع</h3><p>عناوين واضحة وتباين مريح ومساحات مناسبة للقراءة.</p><span class="tag">خط النظام العربي</span></article>
+      </div>
+      <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
+    </section>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة أولية 0.1.0</span></footer>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
