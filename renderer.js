@@ -227,7 +227,7 @@
     if (image) {
       const scale = Math.max(w / image.width, h / image.height);
       const iw = image.width * scale, ih = image.height * scale;
-      ctx.save(); ctx.globalAlpha = .25;
+      ctx.save(); ctx.globalAlpha = scene.imageAssetId ? .58 : .25;
       ctx.drawImage(image, (w-iw)/2, (h-ih)/2, iw, ih);
       ctx.restore();
     }
