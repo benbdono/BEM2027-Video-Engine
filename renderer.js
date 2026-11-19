@@ -113,8 +113,6 @@
     ctx.fillStyle = "#aeb3ca"; ctx.font = "24px Alexandria, Arial";
     ctx.textAlign = "left"; ctx.fillText("ملخصات BEM2027", 90, h-95);
     ctx.textAlign = "right"; ctx.fillText(String(index+1).padStart(2,"0")+" / "+String(total).padStart(2,"0"), w-90, h-95);
-    const fade = Math.max(0, 1 - elapsed/550);
-    if (fade > 0) { ctx.fillStyle = "rgba(5,7,15,"+fade+")"; ctx.fillRect(0,0,w,h); }
     ctx.restore();
   };
 
