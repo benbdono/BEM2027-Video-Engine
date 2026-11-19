@@ -74,3 +74,12 @@ if (!html.includes('id="presentationBtn"') || !html.includes('id="presentationFi
   throw new Error("PowerPoint PPTX import controls or slide parser are missing.");
 }
 console.log("✓ PowerPoint PPTX import controls and slide-to-scene parser");
+
+const app = await readFile("app.js", "utf8");
+if (!html.includes('id="pdfBtn"') || !html.includes('id="pdfFile"') ||
+    !app.includes('pdfjs-dist@4.10.38/build/pdf.mjs') ||
+    !app.includes('pdf.worker.mjs') || !app.includes('page.render') ||
+    !app.includes('pdf.numPages > 20')) {
+  throw new Error("PDF import controls or page-to-scene rendering are missing.");
+}
+console.log("✓ PDF import controls and page-to-scene renderer");
