@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"0.8.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -25,9 +25,25 @@
     $("progress").style.width=`${((current+1)/scenes.length)*100}%`;
     $("robot").style.display=s.robot && $("robotToggle").checked?"block":"none";
     $("sceneCount").style.visibility=$("numberToggle").checked?"visible":"hidden";
-    $("preview").style.backgroundImage = s.image
-      ? 'linear-gradient(115deg,rgba(12,14,25,.88),rgba(19,18,42,.82)),url("' + s.image + '")'
-      : "";
+    const preview = $("preview");
+    const previewToken = (preview.dataset.assetToken = String(Date.now()) + "-" + current);
+    const previewSource = s.image || "";
+    if (s.imageAssetId && window.BEMMedia) {
+      window.BEMMedia.getBlob(s.imageAssetId).then(blob => {
+        if (preview.dataset.assetToken !== previewToken) return;
+        if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
+        preview.dataset.assetUrl = blob ? URL.createObjectURL(blob) : "";
+        preview.style.backgroundImage = blob
+          ? 'linear-gradient(115deg,rgba(12,14,25,.78),rgba(19,18,42,.72)),url("' + preview.dataset.assetUrl + '")'
+          : "";
+      }).catch(() => { preview.style.backgroundImage = ""; });
+    } else {
+      if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl);
+      preview.dataset.assetUrl = "";
+      preview.style.backgroundImage = previewSource
+        ? 'linear-gradient(115deg,rgba(12,14,25,.88),rgba(19,18,42,.82)),url("' + previewSource + '")'
+        : "";
+    }
     document.querySelectorAll(".preview").forEach(el=>el.style.aspectRatio=ratio.replace(":"," / "));
     renderList();
   };
@@ -56,7 +72,9 @@
       <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="none">بدون رسم توضيحي</option></select></label>
       <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
       <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
-      </div><div class="editor-actions"><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
+      </div><div class="editor-actions"><button class="btn ghost" id="clearLibraryImage" disabled>إزالة صورة المكتبة</button><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
+    $("clearLibraryImage").disabled = !s.imageAssetId;
+    $("clearLibraryImage").onclick=()=>{delete s.imageAssetId;save();renderPreview();renderEditor();};
     $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;$("sGraphic").value=s.graphic||"auto";$("sSourceText").value=s.sourceText||"";
     $("sImage").addEventListener("change", async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("يرجى اختيار ملف صورة.");return;}const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const img=new Image();img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);s.image=canvas.toDataURL("image/jpeg",0.82);save();alert("تم حفظ صورة المشهد.");};img.onerror=()=>alert("تعذر قراءة الصورة.");img.src=dataUrl;});
     $("applyScene").onclick=()=>{
@@ -262,6 +280,17 @@
       event.target.value = "";
     }
   };
+
+  window.addEventListener("bem-media-library-ready", () => renderPreview());
+  window.addEventListener("bem-media-selected", event => {
+    const assetId = event.detail?.id;
+    if (!assetId || !scenes[current]) return;
+    scenes[current].imageAssetId = assetId;
+    delete scenes[current].image;
+    save();
+    renderPreview();
+    alert("تم ربط الصورة بالمشهد الحالي. ستُحمّل من مكتبة الوسائط عند المعاينة والتصدير.");
+  });
 
   // Brand logo asset: compressed locally and reused by every rendered scene.
   const logoInput = $("brandLogoFile");

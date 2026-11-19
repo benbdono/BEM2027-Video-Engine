@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 
-const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js", "sw.js", "manifest.webmanifest", "icons/icon.svg"];
+const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js", "sw.js", "manifest.webmanifest", "icons/icon.svg", "media-library.js"];
 for (const file of required) {
   await access(file, constants.R_OK);
   console.log("✓", file);
@@ -106,4 +106,17 @@ if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.
     !sw.includes("CACHE_NAME") || !sw.includes("addAll")) {
   throw new Error("Installable PWA manifest or offline shell registration is incomplete.");
 }
+if (!html.includes('id="mediaLibraryFile"') || !html.includes('id="mediaLibraryGrid"') ||
+    !html.includes('media-library.js?v=1.0.0') || !sw.includes('media-library.js?v=1.0.0')) {
+  throw new Error("Reusable media library controls or PWA cache entry are missing.");
+}
+const mediaLibrary = await readFile("media-library.js", "utf8");
+for (const feature of ["indexedDB.open", "bem2027-media-library", "getBlob", "bem-media-selected", "imageAssetId"]) {
+  if (!mediaLibrary.includes(feature)) throw new Error("Media library is missing: " + feature);
+}
+if (!renderer.includes("window.BEMMedia.getBlob(scene.imageAssetId)") ||
+    !renderer.includes("URL.revokeObjectURL(libraryImageUrl)")) {
+  throw new Error("Renderer does not load and release reusable library image resources.");
+}
+console.log("✓ IndexedDB media library, scene linking and renderer asset loading");
 console.log("✓ Installable PWA manifest and offline app shell");
