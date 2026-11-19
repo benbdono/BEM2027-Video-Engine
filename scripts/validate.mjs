@@ -41,8 +41,11 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
 }
 console.log("✓ MP4 conversion UI and H.264 pipeline");
 
-if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('/dist/esm') || !renderer.includes('/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
-  throw new Error("FFmpeg must use the same-origin ESM worker and ESM core.");
+if (!renderer.includes('vendor/ffmpeg/worker.js') || !renderer.includes('@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js') || !renderer.includes('/dist/esm') || !renderer.includes('/ffmpeg-core.js') || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
+  throw new Error("FFmpeg must use the native ESM entry, same-origin worker and ESM core.");
+}
+if (renderer.includes('dist/umd/ffmpeg.js') || renderer.includes('window.FFmpegWASM')) {
+  throw new Error("The FFmpeg UMD/webpack runtime must not be used.");
 }
 const worker = await readFile("vendor/ffmpeg/worker.js", "utf8");
 for (const dependency of ['./const.js', './errors.js']) {
