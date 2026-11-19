@@ -286,7 +286,8 @@
       });
       const recorderFailed = new Promise(resolve => {
         recorder.addEventListener("error", event => {
-          resolve(event.error || new Error("حدث خطأ أثناء تسجيل الفيديو."));
+          recorderFailure = event.error || new Error("حدث خطأ أثناء تسجيل الفيديو.");
+          resolve(recorderFailure);
         }, { once: true });
       });
       recorder.addEventListener("dataavailable", event => {
