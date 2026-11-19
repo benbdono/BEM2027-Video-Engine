@@ -279,6 +279,7 @@
     }
   };
 
+  window.addEventListener("bem-media-library-ready", () => renderPreview());
   window.addEventListener("bem-media-selected", event => {
     const assetId = event.detail?.id;
     if (!assetId || !scenes[current]) return;
