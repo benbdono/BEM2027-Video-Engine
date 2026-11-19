@@ -16,7 +16,8 @@
     <button class="nav active" data-tab="studio">▣ <span>استوديو الإنتاج</span></button>
     <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
     <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
-    <div class="side-foot"><i></i><span><b>الإصدار 0.1.0</b><small>يعمل محلياً على جهازك</small></span></div>
+    <button class="nav" data-tab="render">▶ <span>إنتاج الفيديو</span></button>
+    <div class="side-foot"><i></i><span><b>الإصدار 0.2.0</b><small>يعمل محلياً على جهازك</small></span></div>
   </aside>
 
   <main class="main">
@@ -63,6 +64,18 @@
       <div class="scene-work"><div class="scene-list" id="sceneList"></div><div class="editor" id="editor"><div class="empty">اختر مشهداً من القائمة لبدء تعديله.</div></div></div>
     </section>
 
+    <section class="panel" id="render">
+      <div class="section-head"><div><h2>إنتاج الفيديو</h2><p>إنشاء ملف فيديو فعلي من المشاهد المحفوظة داخل المتصفح.</p></div><span class="pill">تصدير محلي</span></div>
+      <div class="render-card">
+        <label class="upload-label" for="voiceTrack">المسار الصوتي للفيديو (اختياري)<input id="voiceTrack" type="file" accept="audio/*"></label>
+        <p class="render-help">ارفع ملف التعليق الصوتي أو الصوت النهائي للفيديو. سيتم دمجه مع المشاهد أثناء التصدير.</p>
+        <div class="render-actions"><button class="btn primary" id="renderVideoBtn">إنشاء الفيديو الآن</button><progress id="renderProgress" max="100" value="0"></progress></div>
+        <p id="renderStatus" role="status" aria-live="polite">جاهز لإنشاء الفيديو.</p>
+        <a id="renderDownload" class="btn ghost download-link" hidden>تحميل الفيديو الناتج</a>
+      </div>
+      <div class="notice">ملاحظة تقنية: هذا الإصدار يُنتج WebM محلياً. إخراج MP4 وتركيب تعليق صوتي منفصل لكل مشهد يحتاجان مرحلة محرك ترميز إضافية.</div>
+    </section>
+
     <section class="panel" id="identity">
       <div class="section-head"><div><h2>الهوية البصرية</h2><p>الأسلوب الثابت الذي يميّز فيديوهات ملخصات BEM2027.</p></div></div>
       <div class="identity-grid">
@@ -72,9 +85,10 @@
       </div>
       <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
     </section>
-    <footer>BEM2027 VIDEO ENGINE <span>نسخة أولية 0.1.0</span></footer>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.2.0</span></footer>
   </main>
 </div>
+<script src="renderer.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
