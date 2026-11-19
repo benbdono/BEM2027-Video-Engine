@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "BEM2027 Video Engine",
+  "short_name": "BEM2027 Studio",
+  "description": "استوديو إنتاج الفيديوهات التعليمية لملخصات BEM2027",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0e16",
+  "theme_color": "#10111b",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
