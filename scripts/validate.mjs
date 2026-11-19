@@ -107,7 +107,7 @@ if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.
   throw new Error("Installable PWA manifest or offline shell registration is incomplete.");
 }
 if (!html.includes('id="mediaLibraryFile"') || !html.includes('id="mediaLibraryGrid"') ||
-    !html.includes('media-library.js?v=1.0.0') || !sw.includes('media-library.js?v=1.0.0')) {
+    !html.includes('media-library.js?v=1.0.1') || !sw.includes('media-library.js?v=1.0.1')) {
   throw new Error("Reusable media library controls or PWA cache entry are missing.");
 }
 const mediaLibrary = await readFile("media-library.js", "utf8");
@@ -115,8 +115,15 @@ for (const feature of ["indexedDB.open", "bem2027-media-library", "getBlob", "be
   if (!mediaLibrary.includes(feature)) throw new Error("Media library is missing: " + feature);
 }
 if (!renderer.includes("window.BEMMedia.getBlob(scene.imageAssetId)") ||
-    !renderer.includes("URL.revokeObjectURL(libraryImageUrl)")) {
+    !renderer.includes("URL.revokeObjectURL(libraryImageUrl)") ||
+    !renderer.includes("} finally {\n          if (libraryImageUrl) URL.revokeObjectURL(libraryImageUrl);")) {
   throw new Error("Renderer does not load and release reusable library image resources.");
 }
+if (!mediaLibrary.includes("renderedObjectUrls.forEach(url=>URL.revokeObjectURL(url))") ||
+    !mediaLibrary.includes("renderedObjectUrls.push(img.src)")) throw new Error("Media library preview URLs must be released before rerendering.");
+const previewApp = await readFile("app.js", "utf8");
+if (!previewApp.includes("previewAssetToken") || !previewApp.includes("if (preview.dataset.assetUrl) URL.revokeObjectURL(preview.dataset.assetUrl)") ||
+    !previewApp.includes("if (preview.dataset.assetToken === previewToken)")) throw new Error("Preview image URLs and stale asynchronous loads must be cleaned safely.");
 console.log("✓ IndexedDB media library, scene linking and renderer asset loading");
+console.log("✓ Media object URL cleanup for library, preview and failed scene loads");
 console.log("✓ Installable PWA manifest and offline app shell");
