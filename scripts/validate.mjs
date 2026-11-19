@@ -40,3 +40,8 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
   throw new Error("MP4 H.264 conversion pipeline is missing.");
 }
 console.log("✓ MP4 conversion UI and H.264 pipeline");
+
+if (!renderer.includes("classWorkerURL") || !renderer.includes("/814.ffmpeg.js")) {
+  throw new Error("Explicit FFmpeg UMD class worker loading is missing.");
+}
+console.log("✓ FFmpeg UMD worker is explicitly loaded from the CDN");
