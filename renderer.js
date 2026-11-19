@@ -18,27 +18,19 @@
     if (ffmpegInstance) return ffmpegInstance;
     if (ffmpegLoadPromise) return ffmpegLoadPromise;
     ffmpegLoadPromise = (async () => {
-      if (!window.FFmpegWASM) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js";
-          script.crossOrigin = "anonymous";
-          script.onload = resolve;
-          script.onerror = () => reject(new Error("تعذر تحميل مكتبة FFmpeg من CDN."));
-          document.head.appendChild(script);
-        });
-      }
-      if (!window.FFmpegWASM?.FFmpeg) throw new Error("لم يتم العثور على واجهة FFmpeg في المكتبة المحمّلة.");
-      // Use an unbundled same-origin module worker. The UMD worker chunk is
-      // webpack-lazy-loaded and cannot resolve a Blob URL as a module request.
-      // The worker module and its imports are hosted with this GitHub Pages app.
+      // Import the official ESM entry with the browser's native module loader.
+      // Avoid the UMD/webpack runtime, which can turn Blob-based core imports
+      // into unresolved webpack module lookups ("Cannot find module blob:...").
+      const { FFmpeg } = await import(
+        "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js"
+      );
       const coreURLBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
       const [coreURL, wasmURL] = await Promise.all([
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript"),
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm")
       ]);
       const classWorkerURL = new URL("vendor/ffmpeg/worker.js", window.location.href).href;
-      const ffmpeg = new window.FFmpegWASM.FFmpeg();
+      const ffmpeg = new FFmpeg();
       ffmpeg.on("log", ({ message }) => {
         if (message) {
           console.info("[BEM2027 FFmpeg]", message);

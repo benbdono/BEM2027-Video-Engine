@@ -73,3 +73,13 @@ module worker under `vendor/ffmpeg/`. This avoids the UMD bundle's webpack
 lazy-module lookup for a Blob URL, which can fail in browsers hosted on
 GitHub Pages. The worker is served with the application; the ESM core and
 WASM payload are fetched from jsDelivr and converted to Blob URLs at runtime.
+
+
+### Native ESM loader update (0.5.3)
+
+The converter imports the official `@ffmpeg/ffmpeg` ESM entry through the
+browser's native module loader rather than its UMD/webpack bundle. This avoids
+webpack's dynamic-module lookup being applied to runtime Blob URLs. The
+FFmpeg class worker remains same-origin under `vendor/ffmpeg/`, while the
+single-thread ESM core and WASM binary are loaded from the pinned jsDelivr
+release. The renderer script URL is versioned to avoid stale browser caching.
