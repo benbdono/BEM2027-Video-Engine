@@ -53,7 +53,8 @@
       <label class="wide">النص الظاهر على الشاشة<textarea id="sScreen"></textarea></label>
       <label class="wide">نص التعليق الصوتي<textarea id="sVoice"></textarea></label>
       <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>
-      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="none">بدون رسم توضيحي</option></select></label>\n      <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
+      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="none">بدون رسم توضيحي</option></select></label>
+      <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
       <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
       </div><div class="editor-actions"><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
     $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;$("sGraphic").value=s.graphic||"auto";$("sSourceText").value=s.sourceText||"";
