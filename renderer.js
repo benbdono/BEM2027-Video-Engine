@@ -288,6 +288,7 @@
     let audioContext = null;
     let audioElement = null;
     let audioUrl = null;
+    let firstLibraryImageUrl = null;
     let recorder = null;
     let recordingDone = null;
     let recorderFailure = null;
@@ -346,7 +347,6 @@
 
       // Load the first scene before recording so asset loading does not shift the audio/video start.
       let firstSceneImage = await loadImage(scenes[0].image);
-      let firstLibraryImageUrl = null;
       if (scenes[0].imageAssetId && window.BEMMedia) {
         const firstAssetBlob = await window.BEMMedia.getBlob(scenes[0].imageAssetId);
         if (firstAssetBlob) {
