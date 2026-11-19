@@ -351,28 +351,31 @@
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
         const duration = durations[i];
-        let image = await loadImage(scene.image);
         let libraryImageUrl = null;
-        if (scene.imageAssetId && window.BEMMedia) {
-          const assetBlob = await window.BEMMedia.getBlob(scene.imageAssetId);
-          if (assetBlob) {
-            libraryImageUrl = URL.createObjectURL(assetBlob);
-            image = await loadImage(libraryImageUrl);
+        try {
+          let image = await loadImage(scene.image);
+          if (scene.imageAssetId && window.BEMMedia) {
+            const assetBlob = await window.BEMMedia.getBlob(scene.imageAssetId);
+            if (assetBlob) {
+              libraryImageUrl = URL.createObjectURL(assetBlob);
+              image = await loadImage(libraryImageUrl);
+            }
           }
+          const started = performance.now();
+          while (performance.now() - started < duration) {
+            const elapsed = performance.now() - started;
+            await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image, brandLogo);
+            $("renderProgress").value = Math.min(99, Math.round((elapsedTotal + elapsed) / totalMs * 100));
+            setStatus("جارٍ إنشاء المشهد " + (i + 1) + " من " + scenes.length + "...");
+            recorderFailure = await Promise.race([
+              sleepFrame().then(() => null),
+              recorderFailed
+            ]);
+            if (recorderFailure) throw recorderFailure;
+          }
+        } finally {
+          if (libraryImageUrl) URL.revokeObjectURL(libraryImageUrl);
         }
-        const started = performance.now();
-        while (performance.now() - started < duration) {
-          const elapsed = performance.now() - started;
-          await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image, brandLogo);
-          $("renderProgress").value = Math.min(99, Math.round((elapsedTotal + elapsed) / totalMs * 100));
-          setStatus("جارٍ إنشاء المشهد " + (i + 1) + " من " + scenes.length + "...");
-          recorderFailure = await Promise.race([
-            sleepFrame().then(() => null),
-            recorderFailed
-          ]);
-          if (recorderFailure) throw recorderFailure;
-        }
-        if (libraryImageUrl) URL.revokeObjectURL(libraryImageUrl);
         elapsedTotal += duration;
       }
 
