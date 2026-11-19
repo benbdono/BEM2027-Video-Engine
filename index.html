@@ -17,13 +17,13 @@
     <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
     <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
     <button class="nav" data-tab="render">▶ <span>إنتاج الفيديو</span></button>
-    <div class="side-foot"><i></i><span><b>الإصدار 0.6.0</b><small>يعمل محلياً على جهازك</small></span></div>
+    <div class="side-foot"><i></i><span><b>الإصدار 0.7.0</b><small>يعمل محلياً على جهازك</small></span></div>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div><p class="eyebrow">منصة إنتاج المحتوى التعليمي</p><h1 id="pageTitle">استوديو الفيديو</h1></div>
-      <div class="actions"><span id="saveState">● محفوظ محلياً</span><button class="btn ghost" id="importBtn">استيراد مشروع</button><button class="btn primary" id="exportBtn">تصدير المشروع ↓</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+      <div class="actions"><span id="saveState">● محفوظ محلياً</span><button class="btn ghost" id="importBtn">استيراد مشروع</button><button class="btn ghost" id="presentationBtn">استيراد عرض PPTX</button><input id="presentationFile" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden><button class="btn primary" id="exportBtn">تصدير المشروع ↓</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
     </header>
 
     <section class="panel active" id="studio">
@@ -65,7 +65,7 @@
     </section>
 
     <section class="panel" id="render">
-      <div class="section-head"><div><h2>إنتاج الفيديو</h2><p>إنشاء ملف فيديو فعلي من المشاهد المحفوظة داخل المتصفح.</p></div><span class="pill">تصدير محلي</span></div>
+      <div class="section-head"><div><h2>إنتاج الفيديو</h2><p>إنشاء ملف فيديو فعلي من المشاهد المحفوظة داخل المتصفح.</p></div><span class="pill">تصدير محلي</span></div><div class="notice">يمكنك استيراد عرض PowerPoint بصيغة PPTX من الزر أعلى الصفحة. تُحوّل الشرائح إلى مشاهد قابلة للتحرير، مع استخراج النصوص والصورة الأولى المتاحة في كل شريحة.</div>
       <div class="render-card">
         <label class="upload-label" for="voiceTrack">المسار الصوتي للفيديو (اختياري)<input id="voiceTrack" type="file" accept="audio/*"></label>
         <p class="render-help">ارفع ملف التعليق الصوتي أو الصوت النهائي للفيديو. سيتم دمجه مع المشاهد أثناء التصدير.</p>
@@ -87,10 +87,10 @@
       </div>
       <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
     </section>
-    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.6.0</span></footer>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.7.0</span></footer>
   </main>
 </div>
-<script src="renderer.js?v=0.6.0"></script>
+<script src="renderer.js?v=0.7.0"></script>
 <script src="app.js"></script>
 </body>
 </html>
