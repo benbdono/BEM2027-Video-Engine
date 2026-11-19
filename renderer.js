@@ -195,7 +195,7 @@
     }
     ctx.restore();
   };
-  const drawScene = async (ctx, scene, project, index, total, elapsed, image) => {
+  const drawScene = async (ctx, scene, project, index, total, elapsed, image, brandLogo) => {
     const w = ctx.canvas.width, h = ctx.canvas.height;
     const motion = elapsed / 1000;
     const phase = Math.min(1, elapsed / 750);
@@ -231,7 +231,6 @@
       ctx.drawImage(image, (w-iw)/2, (h-ih)/2, iw, ih);
       ctx.restore();
     }
-    const brandLogo = await loadImage(localStorage.getItem("bemLogo") || "");
     if (brandLogo) { const scale=Math.min(1,Math.min(110/brandLogo.width,80/brandLogo.height)); ctx.drawImage(brandLogo,90,35,brandLogo.width*scale,brandLogo.height*scale); }
     ctx.direction = "rtl"; ctx.textAlign = "right";
     ctx.fillStyle = "#f5f5ff"; ctx.font = "700 42px Alexandria, Arial";
@@ -239,7 +238,7 @@
     ctx.fillStyle = "#36d6c5"; ctx.fillText("2027", w-190, 85);
     const graphicKind = resolveGraphic(scene);
     drawEducationalGraphic(ctx, graphicKind, elapsed);
-    const showRobot = scene.robot !== false && graphicKind === "none";
+    const showRobot = scene.robot !== false;
     if (showRobot) drawRobot(ctx, w*.12, h*.34 + Math.sin(motion*2)*12, Math.min(w,h)*.00115);
     const title = scene.screenText || scene.title || "";
     ctx.fillStyle = "#36d6c5"; ctx.font = "600 32px Alexandria, Arial";
@@ -345,6 +344,7 @@
         catch (_) { setStatus("تعذر تشغيل المسار الصوتي؛ سيُنتج الفيديو دون صوت."); }
       }
 
+      const brandLogo = await loadImage(localStorage.getItem("bemLogo") || "");
       const durations = scenes.map(scene => Math.max(1, Math.min(300, Number(scene.duration) || 5)) * 1000);
       const totalMs = durations.reduce((sum, duration) => sum + duration, 0);
       let elapsedTotal = 0;
@@ -355,7 +355,7 @@
         const started = performance.now();
         while (performance.now() - started < duration) {
           const elapsed = performance.now() - started;
-          await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image);
+          await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image, brandLogo);
           $("renderProgress").value = Math.min(99, Math.round((elapsedTotal + elapsed) / totalMs * 100));
           setStatus("جارٍ إنشاء المشهد " + (i + 1) + " من " + scenes.length + "...");
           recorderFailure = await Promise.race([
