@@ -30,3 +30,13 @@ if (!renderer.includes("canvas.width = 1080") || !renderer.includes("canvas.heig
   throw new Error("Square export dimensions are not configured.");
 }
 console.log("✓ Scene transitions and square output dimensions");
+
+const mp4Button = html.includes('id="convertMp4Btn"');
+const mp4Download = html.includes('id="renderMp4Download"');
+if (!mp4Button || !mp4Download) {
+  throw new Error("MP4 conversion controls are missing from index.html.");
+}
+if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
+  throw new Error("MP4 H.264 conversion pipeline is missing.");
+}
+console.log("✓ MP4 conversion UI and H.264 pipeline");

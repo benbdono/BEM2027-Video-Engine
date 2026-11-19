@@ -17,7 +17,7 @@
     <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
     <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
     <button class="nav" data-tab="render">▶ <span>إنتاج الفيديو</span></button>
-    <div class="side-foot"><i></i><span><b>الإصدار 0.4.0</b><small>يعمل محلياً على جهازك</small></span></div>
+    <div class="side-foot"><i></i><span><b>الإصدار 0.5.0</b><small>يعمل محلياً على جهازك</small></span></div>
   </aside>
 
   <main class="main">
@@ -43,7 +43,7 @@
             <div class="preview-foot"><span>ملخصات BEM2027</span><div class="progress"><i id="progress"></i></div><span id="duration">00:08</span></div>
           </div>
           <div class="preview-controls"><button class="btn ghost" id="prevBtn">السابق ←</button><button class="btn primary" id="playBtn">▶ تشغيل المعاينة</button><button class="btn ghost" id="nextBtn">التالي →</button></div>
-          <div class="notice">ⓘ يمكنك الآن إنشاء فيديو WebM فعلياً من المشاهد، مع إضافة ملف صوتي وصور خلفية. صيغة MP4 ستضاف في مرحلة لاحقة.</div>
+          <div class="notice">ⓘ يمكنك الآن إنشاء فيديو WebM فعلياً من المشاهد، مع إضافة ملف صوتي وصور خلفية. يمكن تحويل ملف WebM الناتج إلى MP4 بعد اكتمال التصدير.</div>
         </section>
 
         <aside class="settings">
@@ -71,9 +71,11 @@
         <p class="render-help">ارفع ملف التعليق الصوتي أو الصوت النهائي للفيديو. سيتم دمجه مع المشاهد أثناء التصدير.</p>
         <div class="render-actions"><button class="btn primary" id="renderVideoBtn">إنشاء الفيديو الآن</button><progress id="renderProgress" max="100" value="0"></progress></div>
         <p id="renderStatus" role="status" aria-live="polite">جاهز لإنشاء الفيديو.</p>
-        <a id="renderDownload" class="btn ghost download-link" hidden>تحميل الفيديو الناتج</a>
+        <a id="renderDownload" class="btn ghost download-link" hidden>تحميل الفيديو الناتج (WebM)</a>
+        <div class="render-actions"><button class="btn ghost" id="convertMp4Btn" disabled>تحويل فيديو WebM إلى MP4</button><a id="renderMp4Download" class="btn primary download-link" hidden>تحميل الفيديو بصيغة MP4</a></div>
+        <p class="render-help">تحويل MP4 اختياري ويعمل محلياً داخل المتصفح عبر FFmpeg WebAssembly. عند أول استخدام يتم تحميل محرك بحجم يقارب 31 MB. يتطلب اتصال إنترنت أثناء تحميل المحرك، ولا تُرفع ملفات الفيديو إلى خادم.</p>
       </div>
-      <div class="notice">ملاحظة تقنية: هذا الإصدار يُنتج WebM محلياً. إخراج MP4 وتركيب تعليق صوتي منفصل لكل مشهد يحتاجان مرحلة محرك ترميز إضافية.</div>
+      <div class="notice">ملاحظة تقنية: يُنتج هذا الإصدار WebM محلياً، ويمكن تحويل الناتج إلى MP4 عبر FFmpeg WebAssembly. الصوت الحالي مسار واحد للمشروع كله.</div>
     </section>
 
     <section class="panel" id="identity">
@@ -85,7 +87,7 @@
       </div>
       <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
     </section>
-    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.4.0</span></footer>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 0.5.0</span></footer>
   </main>
 </div>
 <script src="renderer.js"></script>
