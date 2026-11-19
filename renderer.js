@@ -9,8 +9,8 @@
   let ffmpegLoadPromise = null;
 
   const fetchAsBlobURL = async (url, mime) => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("تعذر تحميل مكوّن الترميز: " + response.status);
+    const response = await fetch(url, { cache: "force-cache" });
+    if (!response.ok) throw new Error("تعذر تحميل مكوّن الترميز: HTTP " + response.status);
     return URL.createObjectURL(new Blob([await response.arrayBuffer()], { type: mime }));
   };
 
@@ -18,40 +18,38 @@
     if (ffmpegInstance) return ffmpegInstance;
     if (ffmpegLoadPromise) return ffmpegLoadPromise;
     ffmpegLoadPromise = (async () => {
-      // Import the official ESM entry with the browser's native module loader.
-      // Avoid the UMD/webpack runtime, which can turn Blob-based core imports
-      // into unresolved webpack module lookups ("Cannot find module blob:...").
+      // Use the pinned official ESM build with the browser's native module loader.
+      // Do not switch to UMD/webpack: that path caused unresolved blob: module lookups.
       const { FFmpeg } = await import(
         "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js"
       );
       const coreURLBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
-      const [coreURL, wasmURL] = await Promise.all([
-        fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript"),
-        fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm")
-      ]);
-      const classWorkerURL = new URL("vendor/ffmpeg/worker.js", window.location.href).href;
-      const ffmpeg = new FFmpeg();
-      ffmpeg.on("log", ({ message }) => {
-        if (message) {
-          console.info("[BEM2027 FFmpeg]", message);
-          if (/error|failed|invalid/i.test(message)) setStatus("FFmpeg: " + message.slice(-220));
-        }
-      });
+      let coreURL = null;
+      let wasmURL = null;
       try {
+        coreURL = await fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript");
+        wasmURL = await fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm");
+        const classWorkerURL = new URL("vendor/ffmpeg/worker.js", document.baseURI).href;
+        const ffmpeg = new FFmpeg();
+        ffmpeg.on("log", ({ message }) => {
+          if (message) {
+            console.info("[BEM2027 FFmpeg]", message);
+            if (/error|failed|invalid/i.test(message)) setStatus("FFmpeg: " + message.slice(-220));
+          }
+        });
         await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
+        ffmpegInstance = ffmpeg;
+        return ffmpeg;
       } finally {
-        URL.revokeObjectURL(coreURL);
-        URL.revokeObjectURL(wasmURL);
+        if (coreURL) URL.revokeObjectURL(coreURL);
+        if (wasmURL) URL.revokeObjectURL(wasmURL);
       }
-      ffmpegInstance = ffmpeg;
-      return ffmpeg;
     })().catch(error => {
       ffmpegLoadPromise = null;
       throw error;
     });
     return ffmpegLoadPromise;
   };
-
   const convertLastVideoToMp4 = async () => {
     const convertButton = $("convertMp4Btn");
     const mp4Link = $("renderMp4Download");
@@ -209,33 +207,48 @@
   };
 
   button.addEventListener("click", async () => {
+    if (button.disabled) return;
     const saved = JSON.parse(localStorage.getItem("bemScenes") || "null");
     const projectData = JSON.parse(localStorage.getItem("bemProject") || "null");
-    const scenes = saved || [];
+    const scenes = Array.isArray(saved) ? saved : [];
     if (!scenes.length) { setStatus("أضف مشهداً واحداً على الأقل قبل التصدير."); return; }
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
       setStatus("متصفحك لا يدعم تسجيل الفيديو. جرّب أحدث إصدار من Chrome أو Edge.");
       return;
     }
+
     const ratio = projectData?.ratio || "16:9";
-    const [rw,rh] = ratio.split(":").map(Number);
-    const canvas = document.createElement("canvas");
-    if (rw === rh) {
-      canvas.width = 1080;
-      canvas.height = 1080;
-    } else if (rw > rh) {
-      canvas.width = 1920;
-      canvas.height = 1080;
-    } else {
-      canvas.width = 1080;
-      canvas.height = 1920;
+    const [rw, rh] = ratio.split(":").map(Number);
+    if (!Number.isFinite(rw) || !Number.isFinite(rh) || rw <= 0 || rh <= 0) {
+      setStatus("نسبة أبعاد الفيديو غير صالحة. اختر 16:9 أو 9:16 أو 1:1.");
+      return;
     }
+
+    const canvas = document.createElement("canvas");
+    if (rw === rh) { canvas.width = 1080; canvas.height = 1080; }
+    else if (rw > rh) { canvas.width = 1920; canvas.height = 1080; }
+    else { canvas.width = 1080; canvas.height = 1920; }
     const ctx = canvas.getContext("2d");
-    const stream = canvas.captureStream(30);
-    let audioContext, audioElement, audioUrl;
-    const audioFile = $("voiceTrack").files[0];
-    if (audioFile) {
-      try {
+    if (!ctx) { setStatus("تعذر تهيئة مساحة رسم الفيديو في هذا المتصفح."); return; }
+
+    let stream = null;
+    let audioContext = null;
+    let audioElement = null;
+    let audioUrl = null;
+    let recorder = null;
+    let recordingDone = null;
+    let recordingStarted = false;
+    const chunks = [];
+    button.disabled = true;
+    $("convertMp4Btn").disabled = true;
+    $("renderMp4Download").hidden = true;
+    $("renderDownload").hidden = true;
+    $("renderProgress").value = 0;
+
+    try {
+      stream = canvas.captureStream(30);
+      const audioFile = $("voiceTrack").files[0];
+      if (audioFile) {
         audioContext = new AudioContext();
         audioElement = new Audio();
         audioUrl = URL.createObjectURL(audioFile);
@@ -244,63 +257,97 @@
         const source = audioContext.createMediaElementSource(audioElement);
         const destination = audioContext.createMediaStreamDestination();
         source.connect(destination);
-        source.connect(audioContext.destination);
         destination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
         await audioContext.resume();
-      } catch (error) {
-        setStatus("تعذر تجهيز المسار الصوتي: " + error.message);
-        return;
       }
-    }
-    const mime = ["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
-    if (!mime) { setStatus("لم يتوفر ترميز WebM في هذا المتصفح."); return; }
-    const chunks = [];
-    let recorder;
-    try { recorder = new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000}); }
-    catch (error) { setStatus("تعذر بدء التصدير: "+error.message); return; }
-    recorder.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
-    recorder.onerror = e => setStatus("حدث خطأ أثناء التسجيل: "+(e.error?.message || "غير معروف"));
-    const done = new Promise(resolve => recorder.onstop = resolve);
-    button.disabled = true;
-    $("renderProgress").value = 0;
-    $("renderDownload").hidden = true;
-    setStatus("جارٍ تجهيز المشاهد...");
-    recorder.start(500);
-    if (audioElement) { try { await audioElement.play(); } catch(e) { setStatus("تعذر تشغيل الملف الصوتي؛ سيُنتج الفيديو دون صوت."); } }
-    const totalMs = scenes.reduce((sum,s)=>sum+Math.max(1,Number(s.duration)||5)*1000,0);
-    let elapsedTotal = 0;
-    for (let i=0;i<scenes.length;i++) {
-      const scene = scenes[i];
-      const duration = Math.max(1,Math.min(300,Number(scene.duration)||5))*1000;
-      const image = await loadImage(scene.image);
-      const started = performance.now();
-      while (performance.now()-started < duration) {
-        const elapsed = performance.now()-started;
-        await drawScene(ctx,scene,projectData||{},i,scenes.length,elapsed,image);
-        $("renderProgress").value = Math.min(100,Math.round((elapsedTotal+elapsed)/totalMs*100));
-        setStatus("جارٍ إنشاء المشهد "+(i+1)+" من "+scenes.length+"...");
-        await sleepFrame();
+
+      const mime = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm"
+      ].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mime) throw new Error("لم يتوفر ترميز WebM في هذا المتصفح.");
+
+      recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+      recordingDone = new Promise((resolve, reject) => {
+        recorder.addEventListener("stop", resolve, { once: true });
+        recorder.addEventListener("error", event => {
+          reject(event.error || new Error("حدث خطأ أثناء تسجيل الفيديو."));
+        }, { once: true });
+      });
+      recorder.addEventListener("dataavailable", event => {
+        if (event.data && event.data.size) chunks.push(event.data);
+      });
+      recorder.start(500);
+      recordingStarted = true;
+      setStatus("جارٍ تجهيز المشاهد...");
+
+      if (audioElement) {
+        try { await audioElement.play(); }
+        catch (_) { setStatus("تعذر تشغيل المسار الصوتي؛ سيُنتج الفيديو دون صوت."); }
       }
-      elapsedTotal += duration;
+
+      const durations = scenes.map(scene => Math.max(1, Math.min(300, Number(scene.duration) || 5)) * 1000);
+      const totalMs = durations.reduce((sum, duration) => sum + duration, 0);
+      let elapsedTotal = 0;
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i];
+        const duration = durations[i];
+        const image = await loadImage(scene.image);
+        const started = performance.now();
+        while (performance.now() - started < duration) {
+          const elapsed = performance.now() - started;
+          await drawScene(ctx, scene, projectData || {}, i, scenes.length, elapsed, image);
+          $("renderProgress").value = Math.min(99, Math.round((elapsedTotal + elapsed) / totalMs * 100));
+          setStatus("جارٍ إنشاء المشهد " + (i + 1) + " من " + scenes.length + "...");
+          await sleepFrame();
+        }
+        elapsedTotal += duration;
+      }
+
+      if (audioElement) audioElement.pause();
+      recorder.stop();
+      recordingStarted = false;
+      await recordingDone;
+      if (!chunks.length) throw new Error("لم ينتج المسجل أي بيانات فيديو.");
+
+      const blob = new Blob(chunks, { type: mime });
+      if (blob.size < 1024) throw new Error("ملف WebM الناتج فارغ أو غير مكتمل.");
+      lastWebmBlob = blob;
+
+      const oldWebmUrl = $("renderDownload").dataset.objectUrl;
+      if (oldWebmUrl) URL.revokeObjectURL(oldWebmUrl);
+      const oldMp4Url = $("renderMp4Download").dataset.objectUrl;
+      if (oldMp4Url) URL.revokeObjectURL(oldMp4Url);
+      $("renderMp4Download").dataset.objectUrl = "";
+      const url = URL.createObjectURL(blob);
+      const link = $("renderDownload");
+      link.href = url;
+      link.dataset.objectUrl = url;
+      link.download = (projectData?.name || "BEM2027-video").replace(/[^\p{L}\p{N}-]+/gu, "-") + ".webm";
+      link.hidden = false;
+      link.textContent = "تحميل الفيديو الناتج (WebM)";
+      $("renderProgress").value = 100;
+      setStatus("اكتمل إنشاء الفيديو. الصيغة الحالية WebM؛ يمكنك الآن طلب تحويله إلى MP4.");
+      $("convertMp4Btn").disabled = false;
+    } catch (error) {
+      setStatus("تعذر إنشاء الفيديو: " + (error?.message || String(error)));
+    } finally {
+      if (audioElement) {
+        try { audioElement.pause(); audioElement.removeAttribute("src"); audioElement.load(); } catch (_) {}
+      }
+      if (recordingStarted && recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch (_) {}
+        if (recordingDone) {
+          try { await recordingDone; } catch (_) {}
+        }
+      }
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      if (audioContext && audioContext.state !== "closed") {
+        try { await audioContext.close(); } catch (_) {}
+      }
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      button.disabled = false;
     }
-    if (audioElement) audioElement.pause();
-    recorder.stop();
-    await done;
-    const blob = new Blob(chunks,{type:mime});
-    lastWebmBlob = blob;
-    $("convertMp4Btn").disabled = false;
-    $("renderMp4Download").hidden = true;
-    const url = URL.createObjectURL(blob);
-    const link = $("renderDownload");
-    link.href = url;
-    link.download = (projectData?.name || "BEM2027-video").replace(/[^\p{L}\p{N}-]+/gu,"-")+".webm";
-    link.hidden = false;
-    link.textContent = "تحميل الفيديو الناتج (WebM)";
-    $("renderProgress").value = 100;
-    setStatus("اكتمل إنشاء الفيديو. الصيغة الحالية WebM وليست MP4.");
-    button.disabled = false;
-    stream.getTracks().forEach(t=>t.stop());
-    if (audioContext) await audioContext.close();
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
   });
 })();
