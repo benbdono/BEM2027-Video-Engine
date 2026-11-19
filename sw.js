@@ -1,11 +1,11 @@
-const CACHE_NAME = "bem2027-studio-shell-v1.0.1";
+const CACHE_NAME = "bem2027-studio-shell-v1.0.2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js?v=1.0.1",
-  "./media-library.js?v=1.0.1",
-  "./renderer.js?v=1.0.1",
+  "./app.js?v=1.0.2",
+  "./media-library.js?v=1.0.2",
+  "./renderer.js?v=1.0.2",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./vendor/ffmpeg/worker.js",
