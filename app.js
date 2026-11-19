@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.1",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
