@@ -59,11 +59,16 @@
     }
     convertButton.disabled = true;
     mp4Link.hidden = true;
+    const previousMp4Url = mp4Link.dataset.objectUrl;
+    if (previousMp4Url) URL.revokeObjectURL(previousMp4Url);
+    mp4Link.dataset.objectUrl = "";
     let ffmpeg;
     try {
       setStatus("جارٍ تحميل محرك MP4 لأول مرة (حوالي 31 MB). قد يستغرق ذلك بعض الوقت...");
       ffmpeg = await loadFFmpeg();
       setStatus("جارٍ تجهيز ملف الفيديو للتحويل...");
+      try { await ffmpeg.deleteFile("bem2027-input.webm"); } catch (_) {}
+      try { await ffmpeg.deleteFile("bem2027-output.mp4"); } catch (_) {}
       await ffmpeg.writeFile("bem2027-input.webm", new Uint8Array(await lastWebmBlob.arrayBuffer()));
       setStatus("جارٍ تحويل الفيديو إلى MP4. لا تغلق الصفحة...");
       const exitCode = await ffmpeg.exec([
@@ -85,7 +90,7 @@
       const url = URL.createObjectURL(mp4Blob);
       mp4Link.href = url;
       mp4Link.dataset.objectUrl = url;
-      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^\\p{L}\\p{N}-]+/gu, "-") + ".mp4";
+      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^\p{L}\p{N}-]+/gu, "-") + ".mp4";
       mp4Link.hidden = false;
       setStatus("اكتمل التحويل. أصبح ملف MP4 جاهزاً للتحميل.");
       try { await ffmpeg.deleteFile("bem2027-input.webm"); } catch (_) {}
