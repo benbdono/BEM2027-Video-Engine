@@ -41,7 +41,10 @@ if (!renderer.includes("libx264") || !renderer.includes("bem2027-output.mp4")) {
 }
 console.log("✓ MP4 conversion UI and H.264 pipeline");
 
-if (!renderer.includes("classWorkerURL") || !renderer.includes("/814.ffmpeg.js")) {
-  throw new Error("Explicit FFmpeg UMD class worker loading is missing.");
+if (!renderer.includes("classWorkerURL") || !renderer.includes("/814.ffmpeg.js") || !renderer.includes("await ffmpeg.load({ coreURL, wasmURL, classWorkerURL })")) {
+  throw new Error("FFmpeg UMD class worker must be passed through the load configuration.");
 }
-console.log("✓ FFmpeg UMD worker is explicitly loaded from the CDN");
+if (renderer.includes("new window.FFmpegWASM.FFmpeg({ classWorkerURL })")) {
+  throw new Error("classWorkerURL must not be passed to the FFmpeg constructor.");
+}
+console.log("✓ FFmpeg UMD class worker is passed through ffmpeg.load()");

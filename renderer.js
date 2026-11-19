@@ -40,7 +40,7 @@
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.js", "text/javascript"),
         fetchAsBlobURL(coreURLBase + "/ffmpeg-core.wasm", "application/wasm")
       ]);
-      const ffmpeg = new window.FFmpegWASM.FFmpeg({ classWorkerURL });
+      const ffmpeg = new window.FFmpegWASM.FFmpeg();
       ffmpeg.on("log", ({ message }) => {
         if (message) {
           console.info("[BEM2027 FFmpeg]", message);
@@ -48,7 +48,10 @@
         }
       });
       try {
-        await ffmpeg.load({ coreURL, wasmURL });
+        // classWorkerURL belongs to the load configuration, not the constructor.
+        // Passing it here makes FFmpeg use the same-origin Blob worker instead
+        // of resolving 814.ffmpeg.js against the CDN script URL.
+        await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
       } finally {
         URL.revokeObjectURL(classWorkerURL);
         URL.revokeObjectURL(coreURL);
