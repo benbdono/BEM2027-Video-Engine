@@ -307,7 +307,19 @@
         audioElement = new Audio();
         audioUrl = URL.createObjectURL(audioFile);
         audioElement.src = audioUrl;
-        audioElement.preload = "auto";
+        audioElement.preload = "metadata";
+        await new Promise((resolve, reject) => {
+          if (audioElement.readyState >= 1) return resolve();
+          const onReady = () => { cleanup(); resolve(); };
+          const onError = () => { cleanup(); reject(new Error("تعذر قراءة مدة الملف الصوتي أو تحميله.")); };
+          const cleanup = () => {
+            audioElement.removeEventListener("loadedmetadata", onReady);
+            audioElement.removeEventListener("error", onError);
+          };
+          audioElement.addEventListener("loadedmetadata", onReady, { once: true });
+          audioElement.addEventListener("error", onError, { once: true });
+          audioElement.load();
+        });
         const source = audioContext.createMediaElementSource(audioElement);
         const destination = audioContext.createMediaStreamDestination();
         source.connect(destination);
@@ -321,6 +333,27 @@
         "video/webm"
       ].find(type => MediaRecorder.isTypeSupported(type));
       if (!mime) throw new Error("لم يتوفر ترميز WebM في هذا المتصفح.");
+
+      const brandLogo = await loadImage(localStorage.getItem("bemLogo") || "");
+      const durations = scenes.map(scene => Math.max(1, Math.min(300, Number(scene.duration) || 5)) * 1000);
+      const totalMs = durations.reduce((sum, duration) => sum + duration, 0);
+      if (audioElement && Number.isFinite(audioElement.duration)) {
+        const audioMs = audioElement.duration * 1000;
+        if (Math.abs(audioMs - totalMs) > 2000) {
+          setStatus("تنبيه: مدة التعليق الصوتي (" + Math.round(audioMs / 1000) + " ث) تختلف عن مدة المشاهد (" + Math.round(totalMs / 1000) + " ث). سيتم الحفاظ على توقيت المشاهد وقد ينتهي الصوت مبكراً أو يستمر بعد نهايتها.");
+        }
+      }
+
+      // Load the first scene before recording so asset loading does not shift the audio/video start.
+      let firstSceneImage = await loadImage(scenes[0].image);
+      let firstLibraryImageUrl = null;
+      if (scenes[0].imageAssetId && window.BEMMedia) {
+        const firstAssetBlob = await window.BEMMedia.getBlob(scenes[0].imageAssetId);
+        if (firstAssetBlob) {
+          firstLibraryImageUrl = URL.createObjectURL(firstAssetBlob);
+          firstSceneImage = await loadImage(firstLibraryImageUrl);
+        }
+      }
 
       recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
       recordingDone = new Promise(resolve => {
@@ -337,24 +370,25 @@
       });
       recorder.start(500);
       recordingStarted = true;
-      setStatus("جارٍ تجهيز المشاهد...");
+      setStatus("جارٍ إنشاء الفيديو...");
 
       if (audioElement) {
+        audioElement.currentTime = 0;
         try { await audioElement.play(); }
         catch (_) { setStatus("تعذر تشغيل المسار الصوتي؛ سيُنتج الفيديو دون صوت."); }
       }
 
-      const brandLogo = await loadImage(localStorage.getItem("bemLogo") || "");
-      const durations = scenes.map(scene => Math.max(1, Math.min(300, Number(scene.duration) || 5)) * 1000);
-      const totalMs = durations.reduce((sum, duration) => sum + duration, 0);
       let elapsedTotal = 0;
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
         const duration = durations[i];
         let libraryImageUrl = null;
         try {
-          let image = await loadImage(scene.image);
-          if (scene.imageAssetId && window.BEMMedia) {
+          let image = i === 0 ? firstSceneImage : await loadImage(scene.image);
+          if (i === 0) {
+            libraryImageUrl = firstLibraryImageUrl;
+            firstLibraryImageUrl = null;
+          } else if (scene.imageAssetId && window.BEMMedia) {
             const assetBlob = await window.BEMMedia.getBlob(scene.imageAssetId);
             if (assetBlob) {
               libraryImageUrl = URL.createObjectURL(assetBlob);
@@ -408,6 +442,7 @@
     } catch (error) {
       setStatus("تعذر إنشاء الفيديو: " + (error?.message || String(error)));
     } finally {
+      if (firstLibraryImageUrl) URL.revokeObjectURL(firstLibraryImageUrl);
       if (audioElement) {
         try { audioElement.pause(); audioElement.removeAttribute("src"); audioElement.load(); } catch (_) {}
       }
