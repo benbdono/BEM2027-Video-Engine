@@ -84,7 +84,7 @@
       const url = URL.createObjectURL(mp4Blob);
       mp4Link.href = url;
       mp4Link.dataset.objectUrl = url;
-      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^\\p{L}\\p{N}-]+/gu, "-") + ".mp4";
+      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^a-zA-Z0-9-]+/g, "-") + ".mp4";
       mp4Link.hidden = false;
       setStatus("اكتمل التحويل. أصبح ملف MP4 جاهزاً للتحميل.");
       try { await ffmpeg.deleteFile("bem2027-input.webm"); } catch (_) {}
