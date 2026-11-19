@@ -66,14 +66,18 @@
       setStatus("جارٍ تجهيز ملف الفيديو للتحويل...");
       await ffmpeg.writeFile("bem2027-input.webm", new Uint8Array(await lastWebmBlob.arrayBuffer()));
       setStatus("جارٍ تحويل الفيديو إلى MP4. لا تغلق الصفحة...");
-      await ffmpeg.exec([
+      const exitCode = await ffmpeg.exec([
         "-i", "bem2027-input.webm",
         "-map", "0:v:0", "-map", "0:a?",
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "24",
         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
         "-movflags", "+faststart", "bem2027-output.mp4"
       ]);
+      if (exitCode !== 0) throw new Error("انتهى FFmpeg برمز خطأ " + exitCode + ".");
       const output = await ffmpeg.readFile("bem2027-output.mp4");
+      const isMp4 = output.length > 12 &&
+        String.fromCharCode(...output.subarray(4, 8)) === "ftyp";
+      if (!isMp4) throw new Error("الملف الناتج لا يحمل ترويسة MP4 صحيحة.");
       const mp4Blob = new Blob([output], { type: "video/mp4" });
       if (mp4Blob.size < 1024) throw new Error("ملف MP4 الناتج غير صالح أو فارغ.");
       const oldUrl = mp4Link.dataset.objectUrl;
@@ -81,7 +85,7 @@
       const url = URL.createObjectURL(mp4Blob);
       mp4Link.href = url;
       mp4Link.dataset.objectUrl = url;
-      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^a-zA-Z0-9-]+/g, "-") + ".mp4";
+      mp4Link.download = (JSON.parse(localStorage.getItem("bemProject") || "{}").name || "BEM2027-video").replace(/[^\\p{L}\\p{N}-]+/gu, "-") + ".mp4";
       mp4Link.hidden = false;
       setStatus("اكتمل التحويل. أصبح ملف MP4 جاهزاً للتحميل.");
       try { await ffmpeg.deleteFile("bem2027-input.webm"); } catch (_) {}
@@ -89,6 +93,8 @@
     } catch (error) {
       setStatus("تعذر إنشاء MP4: " + (error?.message || String(error)) + " — يمكنك الاحتفاظ بملف WebM.");
     } finally {
+      try { await ffmpeg?.deleteFile("bem2027-input.webm"); } catch (_) {}
+      try { await ffmpeg?.deleteFile("bem2027-output.mp4"); } catch (_) {}
       convertButton.disabled = false;
     }
   };
