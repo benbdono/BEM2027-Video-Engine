@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 
-const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js"];
+const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js", "sw.js", "manifest.webmanifest", "icons/icon.svg"];
 for (const file of required) {
   await access(file, constants.R_OK);
   console.log("✓", file);
@@ -83,3 +83,12 @@ if (!html.includes('id="pdfBtn"') || !html.includes('id="pdfFile"') ||
   throw new Error("PDF import controls or page-to-scene rendering are missing.");
 }
 console.log("✓ PDF import controls and page-to-scene renderer");
+
+const manifest = await readFile("manifest.webmanifest", "utf8");
+const sw = await readFile("sw.js", "utf8");
+if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.register') ||
+    !manifest.includes('"display": "standalone"') || !manifest.includes('"start_url": "./"') ||
+    !sw.includes("CACHE_NAME") || !sw.includes("addAll")) {
+  throw new Error("Installable PWA manifest or offline shell registration is incomplete.");
+}
+console.log("✓ Installable PWA manifest and offline app shell");
