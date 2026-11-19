@@ -48,6 +48,7 @@
     });
   };
   window.BEMMedia = {getBlob};
+  window.dispatchEvent(new Event("bem-media-library-ready"));
   const optimize = file => new Promise((resolve,reject)=>{
     const url=URL.createObjectURL(file), img=new Image();
     img.onload=()=>{
