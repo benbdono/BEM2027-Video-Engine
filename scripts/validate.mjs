@@ -1,0 +1,21 @@
+import { access, readFile } from "node:fs/promises";
+import { constants } from "node:fs";
+
+const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md"];
+for (const file of required) {
+  await access(file, constants.R_OK);
+  console.log("✓", file);
+}
+
+const html = await readFile("index.html", "utf8");
+for (const script of ["renderer.js", "app.js"]) {
+  if (!html.includes('src="' + script + '"')) {
+    throw new Error("Missing script reference in index.html: " + script);
+  }
+}
+for (const asset of ["styles.css"]) {
+  if (!html.includes('href="' + asset + '"')) {
+    throw new Error("Missing stylesheet reference in index.html: " + asset);
+  }
+}
+console.log("✓ HTML asset references");
