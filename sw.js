@@ -6,7 +6,7 @@ const APP_SHELL = [
   "./app.js?v=1.2.0",
   "./ai-bridge.js?v=1.2.0",
   "./media-library.js?v=1.0.2",
-  "./renderer.js?v=1.0.2",
+  "./renderer.js?v=1.2.0",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./vendor/ffmpeg/worker.js",
