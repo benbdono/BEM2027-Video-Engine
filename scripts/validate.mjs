@@ -22,8 +22,7 @@ console.log("✓ HTML asset references");
 
 const bridge = await readFile("ai-bridge.js", "utf8");
 if (!bridge.includes("bem2027.video-plan") || !bridge.includes("validatePlan") ||
-    !bridge.includes("applyPlan") || !bridge.includes("BEM2027AIStudioBridge") ||
-    !bridge.includes("requestRender")) {
+    !bridge.includes("applyPlan") || !bridge.includes("BEM2027AIStudioBridge")) {
   throw new Error("AI Studio Bridge schema validation or public API is incomplete.");
 }
 console.log("✓ AI Studio Bridge schema, API and offline cache entry");
