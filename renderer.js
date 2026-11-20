@@ -160,6 +160,10 @@
     if (scene.graphic && scene.graphic !== "auto") return scene.graphic;
     if (scene.graphic === "none") return "none";
     const text = [scene.title,scene.screenText,scene.visual].join(" ");
+    if (/مقارنة|الفرق بين|أوجه الشبه|أوجه الاختلاف/.test(text)) return "comparison";
+    if (/خطوات|خطوة|عملية|تتابع|مراحل متسلسلة/.test(text)) return "process";
+    if (/هرم|طبقات|مستويات|تصنيف هرمي/.test(text)) return "pyramid";
+    if (/خريطة ذهنية|أفكار مترابطة|عصف ذهني/.test(text)) return "mindmap";
     if (/تاريخ|زمن|مرحلة|سنة|قرن|تسلسل/.test(text)) return "timeline";
     if (/دورة|مراحل|دوران|تكاثر|ماء|تنفس/.test(text)) return "cycle";
     if (/معادلة|هندسة|زاوية|دائرة|مثلث|قطر|محيط|مساحة/.test(text)) return "geometry";
@@ -167,7 +171,7 @@
     if (/خلية|ذرة|جسم|قلب|جهاز|علوم|طاقة|كهرباء/.test(text)) return "science";
     return "geometry";
   };
-  const drawEducationalGraphic = (ctx, kind, elapsed) => {
+  const drawEducationalGraphic = (ctx, kind, elapsed, data = {}) => {
     if (!kind || kind === "none") return;
     const w=ctx.canvas.width,h=ctx.canvas.height, t=elapsed/1000;
     const cx=w*.31, cy=h*.55, unit=Math.min(w,h)*.19;
@@ -192,6 +196,28 @@
       ctx.fillStyle=blue;for(let i=0;i<4;i++){ctx.fillRect(-unit*.9+i*unit*.58,unit*.45-i*unit*.23,unit*.25,unit*.3+i*unit*.23);}
     } else if(kind==="science"){
       ctx.strokeStyle=blue;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,.55,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=gold;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,-.55,0,Math.PI*2);ctx.stroke();ctx.fillStyle=glow;ctx.beginPath();ctx.arc(0,0,unit*.13,0,Math.PI*2);ctx.fill();for(let i=0;i<3;i++){const a=t*.8+i*Math.PI*2/3;ctx.fillStyle=i===1?gold:blue;ctx.beginPath();ctx.arc(Math.cos(a)*unit*.88,Math.sin(a)*unit*.35,unit*.08,0,Math.PI*2);ctx.fill();}
+    }
+
+    } else if(kind==="comparison"){
+      const labels=Array.isArray(data.labels)?data.labels:[data.left||"الأول",data.right||"الثاني"];
+      const values=Array.isArray(data.values)?data.values:[72,48];
+      const cardW=unit*.88, cardH=unit*1.45, gap=unit*.18;
+      [-1,1].forEach((side,i)=>{const x=side*(cardW/2+gap/2);ctx.fillStyle="rgba(255,255,255,.07)";ctx.strokeStyle=i?blue:gold;roundedRect(ctx,x-cardW/2,-cardH/2,cardW,cardH,unit*.09);ctx.fill();ctx.stroke();ctx.fillStyle="#fff";ctx.font="600 "+Math.round(unit*.12)+"px Arial";ctx.textAlign="center";ctx.fillText(String(labels[i]||("العنصر "+(i+1))).slice(0,18),x,-cardH*.22);const value=Math.max(0,Math.min(100,Number(values[i])||0));const barH=cardH*.56*Math.min(1,t*.8);ctx.fillStyle="rgba(255,255,255,.1)";roundedRect(ctx,x-cardW*.18,-cardH*.08,cardW*.36,cardH*.62,unit*.04);ctx.fill();ctx.fillStyle=i?blue:gold;roundedRect(ctx,x-cardW*.18,cardH*.54-barH,cardW*.36,barH,unit*.04);ctx.fill();ctx.fillStyle="#fff";ctx.font="700 "+Math.round(unit*.13)+"px Arial";ctx.fillText(Math.round(value)+"%",x,cardH*.73);});
+    } else if(kind==="process"){
+      const labels=Array.isArray(data.labels)&&data.labels.length?data.labels.slice(0,5):["البداية","الخطوة 2","الخطوة 3","النتيجة"];
+      const count=labels.length, span=unit*2.5, start=-span/2, step=count>1?span/(count-1):0;
+      ctx.textAlign="center";ctx.font="600 "+Math.round(unit*.105)+"px Arial";
+      labels.forEach((label,i)=>{const x=start+i*step,reveal=Math.max(0,Math.min(1,t*1.15-i*.28));if(i<count-1){ctx.strokeStyle="rgba(69,191,255,"+reveal+")";ctx.lineWidth=Math.max(4,unit*.035);ctx.beginPath();ctx.moveTo(x+unit*.13,0);ctx.lineTo(x+step-unit*.16,0);ctx.stroke();}ctx.globalAlpha=reveal;ctx.fillStyle=i%2?gold:glow;ctx.beginPath();ctx.arc(x,0,unit*.14,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff";ctx.stroke();ctx.fillStyle="#fff";ctx.fillText(String(label).slice(0,15),x,unit*.34);ctx.globalAlpha=1;});
+    } else if(kind==="pyramid"){
+      const labels=Array.isArray(data.labels)&&data.labels.length?data.labels.slice(0,5):["القاعدة","الوسط","القمة"];
+      const tiers=labels.length, base=unit*2.1, tierH=unit*.34;
+      for(let i=0;i<tiers;i++){const reveal=Math.max(0,Math.min(1,t*1.2-i*.22));if(!reveal)continue;const width=base*(tiers-i)/tiers,y=unit*.72-(i+1)*tierH;ctx.globalAlpha=reveal;ctx.fillStyle=i%2?"rgba(69,191,255,.28)":"rgba(54,214,197,.3)";ctx.strokeStyle=i%2?blue:glow;ctx.beginPath();ctx.moveTo(-width/2,y+tierH);ctx.lineTo(width/2,y+tierH);ctx.lineTo(width*.42,y);ctx.lineTo(-width*.42,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#fff";ctx.font="600 "+Math.round(unit*.105)+"px Arial";ctx.textAlign="center";ctx.fillText(String(labels[i]).slice(0,18),0,y+tierH*.72);ctx.globalAlpha=1;}
+    } else if(kind==="mindmap"){
+      const labels=Array.isArray(data.labels)&&data.labels.length?data.labels.slice(0,5):["فكرة 1","فكرة 2","فكرة 3","فكرة 4"];
+      const center=String(data.center||"الفكرة الرئيسية").slice(0,20),radius=unit*.82;
+      ctx.textAlign="center";ctx.font="600 "+Math.round(unit*.105)+"px Arial";
+      labels.forEach((label,i)=>{const angle=-Math.PI/2+i*Math.PI*2/labels.length,x=Math.cos(angle)*radius,y=Math.sin(angle)*radius,reveal=Math.max(0,Math.min(1,t*1.1-i*.18));ctx.globalAlpha=reveal;ctx.strokeStyle=blue;ctx.lineWidth=Math.max(4,unit*.025);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle="rgba(69,191,255,.2)";ctx.beginPath();ctx.arc(x,y,unit*.2,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#fff";ctx.fillText(String(label).slice(0,14),x,y+unit*.035);ctx.globalAlpha=1;});
+      ctx.fillStyle="rgba(54,214,197,.22)";ctx.strokeStyle=glow;ctx.lineWidth=Math.max(4,unit*.03);ctx.beginPath();ctx.arc(0,0,unit*.27,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#fff";ctx.font="700 "+Math.round(unit*.105)+"px Arial";ctx.fillText(center,0,unit*.035);
     }
     ctx.restore();
   };
@@ -237,7 +263,7 @@
     ctx.fillText("BEM", w-90, 85);
     ctx.fillStyle = "#36d6c5"; ctx.fillText("2027", w-190, 85);
     const graphicKind = resolveGraphic(scene);
-    drawEducationalGraphic(ctx, graphicKind, elapsed);
+    drawEducationalGraphic(ctx, graphicKind, elapsed, scene.graphicData || {});
     const showRobot = scene.robot !== false;
     if (showRobot) drawRobot(ctx, w*.12, h*.34 + Math.sin(motion*2)*12, Math.min(w,h)*.00115);
     const title = scene.screenText || scene.title || "";
