@@ -26,3 +26,5 @@ button:disabled{opacity:.55;cursor:wait}
 .ai-bridge-card #aiBridgeStatus { color: var(--muted, #aeb3ca); margin: 10px 0 0; }
 .ai-bridge-card #aiBridgeStatus[data-state="success"] { color: #36d6c5; }
 .ai-bridge-card #aiBridgeStatus[data-state="error"] { color: #ff8b8b; }
+
+#sGraphicData { min-height: 110px; direction: ltr; text-align: left; font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; }
