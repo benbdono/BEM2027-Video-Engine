@@ -17,8 +17,9 @@ const server = createServer(async (req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, "http://127.0.0.1").pathname);
     const path = resolve(root, "." + pathname);
     if (path !== root && !path.startsWith(root + sep)) throw new Error("Invalid path");
-    const body = await readFile(path === root ? resolve(root, "index.html") : path);
-    res.writeHead(200, { "content-type": mime[extname(path)] || "application/octet-stream" });
+    const filePath = path === root ? resolve(root, "index.html") : path;
+    const body = await readFile(filePath);
+    res.writeHead(200, { "content-type": mime[extname(filePath)] || "application/octet-stream" });
     res.end(body);
   } catch {
     res.writeHead(404);
