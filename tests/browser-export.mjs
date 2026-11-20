@@ -50,18 +50,19 @@ function makeWav(seconds = 3, sampleRate = 48000) {
   return buffer;
 }
 
-async function inspectWebm(page, blob) {
-  return page.evaluate(async bytes => {
+async function inspectWebm(page, bytes) {
+  return page.evaluate(async serializedBytes => {
+    // Playwright serializes plain arrays reliably across the Node/browser boundary.
+    const mediaBytes = new Uint8Array(serializedBytes);
     const video = document.createElement("video");
     video.playsInline = true;
     video.muted = false;
-    const url = URL.createObjectURL(new Blob([bytes], { type: "video/webm" }));
+    const url = URL.createObjectURL(new Blob([mediaBytes], { type: "video/webm" }));
     try {
-      // Register media events before assigning src: a fast decode failure can otherwise
-      // dispatch "error" before the listener exists and leave the test waiting forever.
+      // Register media events before assigning src to avoid missing fast error events.
       const metadataReady = new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error(
-          `Timed out reading WebM metadata (bytes=${bytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
+          `Timed out reading WebM metadata (bytes=${mediaBytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
         )), 10000);
         video.addEventListener("loadedmetadata", () => {
           clearTimeout(timeout);
@@ -70,7 +71,7 @@ async function inspectWebm(page, blob) {
         video.addEventListener("error", () => {
           clearTimeout(timeout);
           reject(new Error(
-            `WebM metadata could not be read (bytes=${bytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
+            `WebM metadata could not be read (bytes=${mediaBytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
           ));
         }, { once: true });
       });
@@ -93,7 +94,7 @@ async function inspectWebm(page, blob) {
       video.load();
       URL.revokeObjectURL(url);
     }
-  }, await blob.arrayBuffer());
+  }, bytes);
 }
 
 let browser;
@@ -126,11 +127,11 @@ try {
     const link = document.querySelector("#renderDownload");
     if (link.hidden || !link.href.startsWith("blob:")) throw new Error("WebM download link is missing");
     const blob = await (await fetch(link.href)).blob();
-    return { size: blob.size, type: blob.type, bytes: await blob.arrayBuffer() };
+    return { size: blob.size, type: blob.type, bytes: Array.from(new Uint8Array(await blob.arrayBuffer())) };
   });
   assert.ok(exportInfo.size > 1024, "The rendered WebM must contain data");
   assert.match(exportInfo.type, /video\/webm/);
-  const rendered = await inspectWebm(page, { arrayBuffer: async () => exportInfo.bytes });
+  const rendered = await inspectWebm(page, exportInfo.bytes);
   assert.ok(rendered.duration >= 3.4 && rendered.duration <= 5.5, `Unexpected rendered duration: ${rendered.duration}`);
   assert.ok(rendered.width >= 1280 && rendered.height >= 720, "Rendered dimensions should be Full HD landscape");
   assert.equal(rendered.audioTracks, 1, "Rendered WebM should retain its voice track");
@@ -176,7 +177,7 @@ try {
       recorder.stop();
       await stopped;
       const blob = new Blob(chunks, { type: supported });
-      results.push({ type: blob.type, size: blob.size, bytes: await blob.arrayBuffer() });
+      results.push({ type: blob.type, size: blob.size, bytes: Array.from(new Uint8Array(await blob.arrayBuffer())) });
     }
     cancelAnimationFrame(animationId);
     oscillator.stop();
@@ -187,7 +188,7 @@ try {
   assert.equal(segmented.length, 2);
   for (const [index, segment] of segmented.entries()) {
     assert.ok(segment.size > 1024, `Segment ${index + 1} is unexpectedly small`);
-    const info = await inspectWebm(page, { arrayBuffer: async () => segment.bytes });
+    const info = await inspectWebm(page, segment.bytes);
     assert.ok(info.duration >= 0.7 && info.duration <= 1.8, `Segment ${index + 1} duration is invalid: ${info.duration}`);
     assert.equal(info.audioTracks, 1, `Segment ${index + 1} lost its audio track`);
   }
