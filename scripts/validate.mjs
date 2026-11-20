@@ -22,7 +22,7 @@ console.log("✓ HTML asset references");
 
 const bridge = await readFile("ai-bridge.js", "utf8");
 if (!bridge.includes("bem2027.video-plan") || !bridge.includes("validatePlan") ||
-    !bridge.includes("applyPlan") || !bridge.includes("BEM2027AIStudioBridge")) {
+    !bridge.includes("applyPlan") || !bridge.includes("BEM2027AIStudioBridge") || !bridge.includes("validateGraphicData")) {
   throw new Error("AI Studio Bridge schema validation or public API is incomplete.");
 }
 console.log("✓ AI Studio Bridge schema, API and offline cache entry");
@@ -31,7 +31,7 @@ const renderer = await readFile("renderer.js", "utf8");
 if (!html.includes("الإصدار 1.2.0") || !html.includes("ai-bridge.js?v=1.2.0")) {
   throw new Error("AI Studio Bridge version label or script reference is missing; expected 1.2.0.");
 }
-if (!html.includes('id="aiPlanInput"') || !html.includes('id="applyAiPlanBtn"') || !html.includes('id="sGraphicData"')) {
+if (!html.includes('id="aiPlanInput"') || !html.includes('id="applyAiPlanBtn"')) {
   throw new Error("AI Studio Bridge controls are missing from index.html.");
 }
 for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
@@ -98,6 +98,7 @@ if (!html.includes('id="pdfBtn"') || !html.includes('id="pdfFile"') ||
 console.log("✓ PDF import controls and page-to-scene renderer");
 
 const visualApp = await readFile("app.js", "utf8");
+if (!visualApp.includes("sGraphicData")) throw new Error("Structured graphic data editor is missing.");
 if (!visualApp.includes('id="sGraphic"') || !visualApp.includes('s.graphic') ||
     !html.includes('id="brandLogoFile"') || !visualApp.includes('bemLogo')) {
   throw new Error("Educational graphic controls or reusable brand logo upload are missing.");
