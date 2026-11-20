@@ -196,8 +196,6 @@
       ctx.fillStyle=blue;for(let i=0;i<4;i++){ctx.fillRect(-unit*.9+i*unit*.58,unit*.45-i*unit*.23,unit*.25,unit*.3+i*unit*.23);}
     } else if(kind==="science"){
       ctx.strokeStyle=blue;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,.55,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=gold;ctx.beginPath();ctx.ellipse(0,0,unit*1.05,unit*.42,-.55,0,Math.PI*2);ctx.stroke();ctx.fillStyle=glow;ctx.beginPath();ctx.arc(0,0,unit*.13,0,Math.PI*2);ctx.fill();for(let i=0;i<3;i++){const a=t*.8+i*Math.PI*2/3;ctx.fillStyle=i===1?gold:blue;ctx.beginPath();ctx.arc(Math.cos(a)*unit*.88,Math.sin(a)*unit*.35,unit*.08,0,Math.PI*2);ctx.fill();}
-    }
-
     } else if(kind==="comparison"){
       const labels=Array.isArray(data.labels)?data.labels:[data.left||"الأول",data.right||"الثاني"];
       const values=Array.isArray(data.values)?data.values:[72,48];
