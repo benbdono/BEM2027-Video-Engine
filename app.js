@@ -14,7 +14,7 @@
     localStorage.setItem("bemProject", JSON.stringify({name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio}));
     $("saveState").textContent = "● تم الحفظ محلياً";
   };
-  const project = () => ({app:"BEM2027 Video Engine",version:"1.0.2",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
+  const project = () => ({app:"BEM2027 Video Engine",version:"1.2.0",exportedAt:new Date().toISOString(),project:{name:$("projectName").value,subject:$("subject").value,title:$("videoTitle").value,ratio},scenes});
   const renderPreview = () => {
     const s=scenes[current]; if(!s)return;
     $("previewSubject").textContent=$("subject").value;
@@ -71,15 +71,20 @@
       <label class="wide">النص الظاهر على الشاشة<textarea id="sScreen"></textarea></label>
       <label class="wide">نص التعليق الصوتي<textarea id="sVoice"></textarea></label>
       <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>
-      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="none">بدون رسم توضيحي</option></select></label>
+      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="comparison">مقارنة</option><option value="process">تسلسل الخطوات</option><option value="pyramid">هرم المستويات</option><option value="mindmap">خريطة ذهنية</option><option value="none">بدون رسم توضيحي</option></select></label>
+      <label class="wide">بيانات الرسم التوضيحي JSON<textarea id="sGraphicData"></textarea></label>
       <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
       <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
       </div><div class="editor-actions"><button class="btn ghost" id="clearLibraryImage" disabled>إزالة صورة المكتبة</button><button class="btn ghost" id="duplicateScene">نسخ المشهد</button><button class="btn primary" id="applyScene">حفظ تعديلات المشهد</button></div>`;
     $("clearLibraryImage").disabled = !s.imageAssetId;
     $("clearLibraryImage").onclick=()=>{delete s.imageAssetId;save();renderPreview();renderEditor();};
-    $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;$("sGraphic").value=s.graphic||"auto";$("sSourceText").value=s.sourceText||"";
+    $("sTitle").value=s.title;$("sDuration").value=s.duration;$("sTransition").value=s.transition;$("sRobot").value=String(!!s.robot);$("sScreen").value=s.screenText;$("sVoice").value=s.voice;$("sVisual").value=s.visual;$("sGraphic").value=s.graphic||"auto";$("sGraphicData").value=JSON.stringify(s.graphicData||{},null,2);$("sSourceText").value=s.sourceText||"";
     $("sImage").addEventListener("change", async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("يرجى اختيار ملف صورة.");return;}const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const img=new Image();img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);s.image=canvas.toDataURL("image/jpeg",0.82);save();alert("تم حفظ صورة المشهد.");};img.onerror=()=>alert("تعذر قراءة الصورة.");img.src=dataUrl;});
     $("applyScene").onclick=()=>{
+      let graphicData;
+      try { graphicData=JSON.parse($("sGraphicData").value.trim()||"{}"); if(!graphicData||typeof graphicData!=="object"||Array.isArray(graphicData)) throw new Error("بيانات الرسم يجب أن تكون كائن JSON."); }
+      catch(error) { alert("بيانات الرسم غير صالحة: "+error.message); return; }
+      s.graphicData=graphicData;
       s.title=$("sTitle").value.trim()||"مشهد جديد";s.duration=Math.max(1,Math.min(300,Number($("sDuration").value)||1));s.transition=$("sTransition").value;s.robot=$("sRobot").value==="true";s.screenText=$("sScreen").value;s.voice=$("sVoice").value;s.visual=$("sVisual").value;s.graphic=$("sGraphic").value;s.sourceText=$("sSourceText").value;save();renderPreview();renderEditor();
     };
     $("duplicateScene").onclick=()=>{scenes.splice(current+1,0,{...s,title:s.title+" - نسخة"});current++;save();renderPreview();renderEditor();};

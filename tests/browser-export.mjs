@@ -119,7 +119,7 @@ try {
       schema: "bem2027.video-plan", version: 1,
       project: { name: "BEM2027 bridge QA", subject: "العلوم الطبيعية", title: "اختبار الجسر", ratio: "16:9" },
       scenes: [
-        { title: "Bridge intro", duration: 2, transition: "تلاشي", screenText: "خطة اختبار", voice: "صوت اختبار", visual: "رسوم توضيحية", robot: false, graphic: "geometry" },
+        { title: "Bridge intro", duration: 2, transition: "تلاشي", screenText: "خطة اختبار", voice: "صوت اختبار", visual: "رسوم توضيحية", robot: false, graphic: "comparison", graphicData: { labels: ["الطاقة الشمسية", "الوقود"], values: [85, 45] } },
         { title: "Bridge lesson", duration: 2, transition: "انزلاق", screenText: "المشهد الثاني", voice: "استمرار الصوت", visual: "خط زمني", robot: true, graphic: "timeline" }
       ]
     };
@@ -127,11 +127,13 @@ try {
     let invalidRejected = false;
     try { window.BEM2027AIStudioBridge.applyPlan({ ...plan, scenes: [{ ...plan.scenes[0], duration: 9999 }] }); }
     catch (_) { invalidRejected = true; }
-    return { count: applied.scenes.length, name: applied.project.name, invalidRejected };
+    return { count: applied.scenes.length, name: applied.project.name, invalidRejected, graphic: applied.scenes[0].graphic, graphicData: applied.scenes[0].graphicData };
   });
   assert.equal(bridgeCheck.count, 2, "AI bridge should apply two valid scenes");
   assert.equal(bridgeCheck.name, "BEM2027 bridge QA");
   assert.equal(bridgeCheck.invalidRejected, true, "AI bridge should reject out-of-range scene durations");
+  assert.equal(bridgeCheck.graphic, "comparison");
+  assert.deepEqual(bridgeCheck.graphicData, { labels: ["الطاقة الشمسية", "الوقود"], values: [85, 45] });
   await page.locator(".nav[data-tab=\"render\"]").click();
   await page.locator("#voiceTrack").setInputFiles({
     name: "qa-tone.wav",
