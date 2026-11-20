@@ -97,6 +97,7 @@ try {
     localStorage.setItem("bemProject", JSON.stringify({ name: "BEM2027 browser QA", subject: "العلوم الطبيعية", title: "اختبار التصدير", ratio: "16:9" }));
   });
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+  await page.locator(".nav[data-tab=\"render\"]").click();
   await page.locator("#voiceTrack").setInputFiles({
     name: "qa-tone.wav",
     mimeType: "audio/wav",
