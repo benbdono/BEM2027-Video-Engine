@@ -64,8 +64,7 @@
     return { schema, version: 1, project: loaded.project, scenes: loaded.scenes };
   };
   const bridge = Object.freeze({ version: "1.1.0", validatePlan, applyPlan, exportPlan,
-    getProject: () => window.BEM2027Editor?.getProject?.() || null,
-    requestRender: () => { const button = $("renderVideoBtn"); if (!button || button.disabled) fail("زر التصدير غير جاهز."); button.click(); return true; }
+    getProject: () => window.BEM2027Editor?.getProject?.() || null
   });
   Object.defineProperty(window, "BEM2027AIStudioBridge", { value: bridge, configurable: false, writable: false });
   const status = (message, state) => { const node = $("aiBridgeStatus"); if (node) { node.textContent = message; node.dataset.state = state || ""; } };
