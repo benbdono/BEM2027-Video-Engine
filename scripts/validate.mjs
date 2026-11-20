@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 
-const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js", "sw.js", "manifest.webmanifest", "icons/icon.svg", "media-library.js"];
+const required = ["index.html", "styles.css", "app.js", "renderer.js", "README.md", "vendor/ffmpeg/worker.js", "vendor/ffmpeg/const.js", "vendor/ffmpeg/errors.js", "sw.js", "manifest.webmanifest", "icons/icon.svg", "media-library.js", "ai-bridge.js"];
 for (const file of required) {
   await access(file, constants.R_OK);
   console.log("✓", file);
@@ -20,9 +20,21 @@ for (const asset of ["styles.css"]) {
 }
 console.log("✓ HTML asset references");
 
+const bridge = await readFile("ai-bridge.js", "utf8");
+if (!bridge.includes("bem2027.video-plan") || !bridge.includes("validatePlan") ||
+    !bridge.includes("applyPlan") || !bridge.includes("BEM2027AIStudioBridge") ||
+    !bridge.includes("requestRender")) {
+  throw new Error("AI Studio Bridge schema validation or public API is incomplete.");
+}
+if (!sw.includes("ai-bridge.js?v=1.1.0")) throw new Error("AI Studio Bridge is missing from the PWA offline shell.");
+console.log("✓ AI Studio Bridge schema, API and offline cache entry");
+
 const renderer = await readFile("renderer.js", "utf8");
-if (!html.includes("الإصدار 1.0.2") || html.includes("الإصدار 1.0.0")) {
-  throw new Error("Sidebar version label is stale; expected 1.0.2.");
+if (!html.includes("الإصدار 1.1.0") || !html.includes("ai-bridge.js?v=1.1.0")) {
+  throw new Error("AI Studio Bridge version label or script reference is missing; expected 1.1.0.");
+}
+if (!html.includes('id="aiPlanInput"') || !html.includes('id="applyAiPlanBtn"')) {
+  throw new Error("AI Studio Bridge controls are missing from index.html.");
 }
 for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
   if (!renderer.includes(transition)) {
