@@ -3,10 +3,28 @@
   const $ = id => document.getElementById(id);
   const schema = "bem2027.video-plan";
   const transitions = new Set(["تلاشي", "انزلاق", "تكبير", "مسح جانبي", "قطع مباشر"]);
-  const graphics = new Set(["auto", "geometry", "timeline", "cycle", "chart", "science", "none"]);
+  const graphics = new Set(["auto", "geometry", "timeline", "cycle", "chart", "science", "comparison", "process", "pyramid", "mindmap", "none"]);
   const ratios = new Set(["16:9", "9:16", "1:1"]);
   const limits = { title: 160, screenText: 1200, voice: 4000, visual: 1200, sourceText: 8000 };
   const fail = message => { throw new Error(message); };
+  const validateGraphicData = value => {
+    if (value == null) return {};
+    if (typeof value !== "object" || Array.isArray(value)) fail("بيانات الرسم يجب أن تكون كائن JSON.");
+    const out = {};
+    if (value.labels != null) {
+      if (!Array.isArray(value.labels) || value.labels.length > 5) fail("قائمة تسميات الرسم يجب ألا تتجاوز 5 عناصر.");
+      out.labels = value.labels.map((item, index) => cleanText(item, "تسمية الرسم " + (index + 1), 40));
+    }
+    if (value.values != null) {
+      if (!Array.isArray(value.values) || value.values.length > 5 || value.values.some(item => !Number.isFinite(Number(item)) || Number(item) < 0 || Number(item) > 100)) fail("قيم الرسم يجب أن تكون أرقاماً بين 0 و100 وبحد أقصى 5 قيم.");
+      out.values = value.values.map(Number);
+    }
+    for (const key of ["left", "right", "center", "caption"]) {
+      if (value[key] != null) out[key] = cleanText(value[key], "بيانات الرسم " + key, 60);
+    }
+    return out;
+  };
+
   const cleanText = (value, field, max) => {
     if (value == null) return "";
     if (typeof value !== "string") fail("الحقل " + field + " يجب أن يكون نصاً.");
@@ -43,6 +61,7 @@
         visual: cleanText(scene.visual, "الوصف البصري", limits.visual),
         sourceText: cleanText(scene.sourceText, "النص المرجعي", limits.sourceText),
         robot: scene.robot === true,
+        graphicData: validateGraphicData(scene.graphicData),
         graphic
       };
     });
@@ -54,7 +73,7 @@
     return validatePlan({ schema, version: 1, project: current.project, scenes: current.scenes.map(scene => ({
       title: scene.title, duration: Number(scene.duration), transition: scene.transition || "تلاشي",
       screenText: scene.screenText || "", voice: scene.voice || "", visual: scene.visual || "",
-      sourceText: scene.sourceText || "", robot: scene.robot === true, graphic: scene.graphic || "auto"
+      sourceText: scene.sourceText || "", robot: scene.robot === true, graphic: scene.graphic || "auto", graphicData: scene.graphicData || {}
     })) });
   };
   const applyPlan = input => {
@@ -63,7 +82,7 @@
     const loaded = window.BEM2027Editor.loadProject({ project: plan.project, scenes: plan.scenes });
     return { schema, version: 1, project: loaded.project, scenes: loaded.scenes };
   };
-  const bridge = Object.freeze({ version: "1.1.0", validatePlan, applyPlan, exportPlan,
+  const bridge = Object.freeze({ version: "1.2.0", validatePlan, applyPlan, exportPlan,
     getProject: () => window.BEM2027Editor?.getProject?.() || null
   });
   Object.defineProperty(window, "BEM2027AIStudioBridge", { value: bridge, configurable: false, writable: false });
