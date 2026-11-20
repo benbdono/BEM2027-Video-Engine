@@ -114,6 +114,24 @@ try {
     localStorage.setItem("bemProject", JSON.stringify({ name: "BEM2027 browser QA", subject: "العلوم الطبيعية", title: "اختبار التصدير", ratio: "16:9" }));
   });
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+  const bridgeCheck = await page.evaluate(() => {
+    const plan = {
+      schema: "bem2027.video-plan", version: 1,
+      project: { name: "BEM2027 bridge QA", subject: "العلوم الطبيعية", title: "اختبار الجسر", ratio: "16:9" },
+      scenes: [
+        { title: "Bridge intro", duration: 2, transition: "تلاشي", screenText: "خطة اختبار", voice: "صوت اختبار", visual: "رسوم توضيحية", robot: false, graphic: "geometry" },
+        { title: "Bridge lesson", duration: 2, transition: "انزلاق", screenText: "المشهد الثاني", voice: "استمرار الصوت", visual: "خط زمني", robot: true, graphic: "timeline" }
+      ]
+    };
+    const applied = window.BEM2027AIStudioBridge.applyPlan(plan);
+    let invalidRejected = false;
+    try { window.BEM2027AIStudioBridge.applyPlan({ ...plan, scenes: [{ ...plan.scenes[0], duration: 9999 }] }); }
+    catch (_) { invalidRejected = true; }
+    return { count: applied.scenes.length, name: applied.project.name, invalidRejected };
+  });
+  assert.equal(bridgeCheck.count, 2, "AI bridge should apply two valid scenes");
+  assert.equal(bridgeCheck.name, "BEM2027 bridge QA");
+  assert.equal(bridgeCheck.invalidRejected, true, "AI bridge should reject out-of-range scene durations");
   await page.locator(".nav[data-tab=\"render\"]").click();
   await page.locator("#voiceTrack").setInputFiles({
     name: "qa-tone.wav",

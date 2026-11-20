@@ -319,6 +319,25 @@
     } catch(error) { alert("تعذر حفظ الشعار: "+(error.message||String(error))); }
     event.target.value="";
   });
+  // Public, narrow editor API used by the BEM2027 AI Studio Bridge.
+  window.BEM2027Editor = {
+    getProject: () => project(),
+    loadProject: data => {
+      if (!data || !Array.isArray(data.scenes) || !data.scenes.length) throw new Error("المشروع لا يحتوي على مشاهد صالحة.");
+      scenes = data.scenes.map(scene => ({ ...scene }));
+      current = 0;
+      if (data.project && typeof data.project === "object") {
+        $("projectName").value = String(data.project.name || "مشروع BEM2027");
+        $("subject").value = String(data.project.subject || "العلوم الطبيعية");
+        $("videoTitle").value = String(data.project.title || "");
+        ratio = ["16:9", "9:16", "1:1"].includes(data.project.ratio) ? data.project.ratio : "16:9";
+      }
+      document.querySelectorAll("[data-ratio]").forEach(button => button.classList.toggle("chosen", button.dataset.ratio === ratio));
+      save(); renderPreview(); renderEditor();
+      return project();
+    }
+  };
+
   const oldProject=JSON.parse(localStorage.getItem("bemProject")||"null");if(oldProject){$("projectName").value=oldProject.name||$("projectName").value;$("subject").value=oldProject.subject||$("subject").value;$("videoTitle").value=oldProject.title||$("videoTitle").value;ratio=oldProject.ratio||ratio;}
   renderPreview();renderEditor();save();
 })();
