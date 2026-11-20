@@ -26,7 +26,6 @@ if (!bridge.includes("bem2027.video-plan") || !bridge.includes("validatePlan") |
     !bridge.includes("requestRender")) {
   throw new Error("AI Studio Bridge schema validation or public API is incomplete.");
 }
-if (!sw.includes("ai-bridge.js?v=1.1.0")) throw new Error("AI Studio Bridge is missing from the PWA offline shell.");
 console.log("✓ AI Studio Bridge schema, API and offline cache entry");
 
 const renderer = await readFile("renderer.js", "utf8");
@@ -116,6 +115,7 @@ console.log("✓ Animated educational diagrams, scene graphic selection and reus
 
 const manifest = await readFile("manifest.webmanifest", "utf8");
 const sw = await readFile("sw.js", "utf8");
+if (!sw.includes("ai-bridge.js?v=1.1.0")) throw new Error("AI Studio Bridge is missing from the PWA offline shell.");
 if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.register') ||
     !manifest.includes('"display": "standalone"') || !manifest.includes('"start_url": "./"') ||
     !sw.includes("CACHE_NAME") || !sw.includes("addAll")) {
