@@ -22,7 +22,7 @@
     <button class="nav" data-tab="scenes">▤ <span>إدارة المشاهد</span></button>
     <button class="nav" data-tab="identity">✦ <span>الهوية البصرية</span></button>
     <button class="nav" data-tab="render">▶ <span>إنتاج الفيديو</span></button>
-    <div class="side-foot"><i></i><span><b>الإصدار 1.0.2</b><small>يعمل محلياً على جهازك</small></span></div>
+    <div class="side-foot"><i></i><span><b>الإصدار 1.1.0</b><small>يعمل محلياً على جهازك</small></span></div>
   </aside>
 
   <main class="main">
@@ -66,6 +66,14 @@
 
     <section class="panel" id="scenes">
       <div class="section-head scene-top"><div><h2>إدارة المشاهد</h2><p>أضف المشاهد ورتّبها وعدّل محتواها ومدتها.</p></div><button class="btn primary" id="addScene">＋ إضافة مشهد</button></div>
+      <div class="render-card ai-bridge-card">
+        <h3>جسر الذكاء الاصطناعي — BEM2027 AI Studio Bridge</h3>
+        <p class="render-help">الصق خطة إنتاج بصيغة JSON ليحوّلها الاستوديو إلى مشروع ومشاهد قابلة للتحرير. لا تُضمّن الصور أو الملفات الصوتية داخل الخطة؛ أضفها من مكتبة الوسائط والمسار الصوتي.</p>
+        <label for="aiPlanInput">خطة الإنتاج JSON</label>
+        <textarea id="aiPlanInput" rows="8" spellcheck="false" placeholder='{"schema":"bem2027.video-plan","version":1,"project":{"name":"مراجعة التاريخ","subject":"التاريخ والجغرافيا","title":"الثورة التحريرية","ratio":"16:9"},"scenes":[{"title":"المقدمة","duration":8,"transition":"تلاشي","screenText":"عنوان المشهد","voice":"نص التعليق الصوتي","visual":"وصف العناصر والرسومات","robot":true,"graphic":"timeline"}]}'></textarea>
+        <div class="render-actions"><button class="btn primary" id="applyAiPlanBtn">تحقق وطبّق الخطة</button><button class="btn ghost" id="exportAiPlanBtn">تصدير المشروع كخطة AI</button></div>
+        <p id="aiBridgeStatus" role="status" aria-live="polite">الجسر جاهز لاستقبال خطة إنتاج.</p>
+      </div>
       <div class="scene-work"><div class="scene-list" id="sceneList"></div><div class="editor" id="editor"><div class="empty">اختر مشهداً من القائمة لبدء تعديله.</div></div></div>
     </section>
 
@@ -99,12 +107,13 @@
       </div>
       <div class="notice">إعدادات الهوية مرجعية في الإصدار الأول. إضافة مكتبة خلفيات وشخصيات قابلة للتخصيص ستكون مرحلة تطوير لاحقة.</div>
     </section>
-    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 1.0.2</span></footer>
+    <footer>BEM2027 VIDEO ENGINE <span>نسخة تطوير 1.1.0</span></footer>
   </main>
 </div>
 <script src="renderer.js?v=1.0.2"></script>
 <script src="app.js?v=1.0.2"></script>
 <script src="media-library.js?v=1.0.2"></script>
+<script src="ai-bridge.js?v=1.1.0"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.warn("PWA offline cache unavailable:", error)));</script>
 </body>
 </html>
