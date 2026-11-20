@@ -71,7 +71,7 @@
       <label class="wide">النص الظاهر على الشاشة<textarea id="sScreen"></textarea></label>
       <label class="wide">نص التعليق الصوتي<textarea id="sVoice"></textarea></label>
       <label class="wide">وصف المشهد البصري<textarea id="sVisual"></textarea></label>
-      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="none">بدون رسم توضيحي</option></select></label>
+      <label class="wide">نوع الرسم التوضيحي<select id="sGraphic"><option value="auto">تلقائي حسب الوصف</option><option value="geometry">هندسة وأشكال</option><option value="timeline">خط زمني</option><option value="cycle">دورة ومراحل</option><option value="chart">مخطط بياني</option><option value="science">علوم</option><option value="comparison">مقارنة</option><option value="process">تسلسل الخطوات</option><option value="pyramid">هرم المستويات</option><option value="mindmap">خريطة ذهنية</option><option value="none">بدون رسم توضيحي</option></select></label>
       <label class="wide">بيانات الرسم التوضيحي JSON<textarea id="sGraphicData"></textarea></label>
       <label class="wide">النص المستخرج من العرض أو PDF<textarea id="sSourceText"></textarea></label>
       <label class="wide">صورة خلفية للمشهد (اختياري)<input class="image-upload" id="sImage" type="file" accept="image/*"></label>
