@@ -28,10 +28,10 @@ if (!bridge.includes("bem2027.video-plan") || !bridge.includes("validatePlan") |
 console.log("✓ AI Studio Bridge schema, API and offline cache entry");
 
 const renderer = await readFile("renderer.js", "utf8");
-if (!html.includes("الإصدار 1.1.0") || !html.includes("ai-bridge.js?v=1.1.0")) {
-  throw new Error("AI Studio Bridge version label or script reference is missing; expected 1.1.0.");
+if (!html.includes("الإصدار 1.2.0") || !html.includes("ai-bridge.js?v=1.2.0")) {
+  throw new Error("AI Studio Bridge version label or script reference is missing; expected 1.2.0.");
 }
-if (!html.includes('id="aiPlanInput"') || !html.includes('id="applyAiPlanBtn"')) {
+if (!html.includes('id="aiPlanInput"') || !html.includes('id="applyAiPlanBtn"') || !html.includes('id="sGraphicData"')) {
   throw new Error("AI Studio Bridge controls are missing from index.html.");
 }
 for (const transition of ["انزلاق", "تكبير", "مسح جانبي", "تلاشي"]) {
@@ -106,7 +106,7 @@ if (!renderer.includes("drawEducationalGraphic") || !renderer.includes("resolveG
     !renderer.includes('scene.graphic') || !renderer.includes('localStorage.getItem("bemLogo")')) {
   throw new Error("Canvas renderer is missing animated educational diagram or brand logo support.");
 }
-for (const graphic of ["geometry", "timeline", "cycle", "chart", "science"]) {
+for (const graphic of ["geometry", "timeline", "cycle", "chart", "science", "comparison", "process", "pyramid", "mindmap"]) {
   if (!renderer.includes('kind==="' + graphic + '"')) throw new Error("Missing educational graphic renderer: " + graphic);
 }
 console.log("✓ Animated educational diagrams, scene graphic selection and reusable brand logo");
@@ -114,7 +114,7 @@ console.log("✓ Animated educational diagrams, scene graphic selection and reus
 
 const manifest = await readFile("manifest.webmanifest", "utf8");
 const sw = await readFile("sw.js", "utf8");
-if (!sw.includes("ai-bridge.js?v=1.1.0")) throw new Error("AI Studio Bridge is missing from the PWA offline shell.");
+if (!sw.includes("ai-bridge.js?v=1.2.0")) throw new Error("AI Studio Bridge is missing from the PWA offline shell.");
 if (!html.includes('rel="manifest"') || !html.includes('navigator.serviceWorker.register') ||
     !manifest.includes('"display": "standalone"') || !manifest.includes('"start_url": "./"') ||
     !sw.includes("CACHE_NAME") || !sw.includes("addAll")) {
