@@ -57,11 +57,25 @@ async function inspectWebm(page, blob) {
     video.muted = false;
     const url = URL.createObjectURL(new Blob([bytes], { type: "video/webm" }));
     try {
-      video.src = url;
-      await new Promise((resolve, reject) => {
-        video.addEventListener("loadedmetadata", resolve, { once: true });
-        video.addEventListener("error", () => reject(new Error("WebM metadata could not be read")), { once: true });
+      // Register media events before assigning src: a fast decode failure can otherwise
+      // dispatch "error" before the listener exists and leave the test waiting forever.
+      const metadataReady = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(
+          `Timed out reading WebM metadata (bytes=${bytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
+        )), 10000);
+        video.addEventListener("loadedmetadata", () => {
+          clearTimeout(timeout);
+          resolve();
+        }, { once: true });
+        video.addEventListener("error", () => {
+          clearTimeout(timeout);
+          reject(new Error(
+            `WebM metadata could not be read (bytes=${bytes.byteLength}, mediaError=${video.error?.code || "none"}: ${video.error?.message || "none"})`
+          ));
+        }, { once: true });
       });
+      video.src = url;
+      await metadataReady;
       await video.play();
       await new Promise(resolve => setTimeout(resolve, 250));
       const stream = video.captureStream ? video.captureStream() : null;
